@@ -1,3 +1,4 @@
+package com.suitandtiefinancial.baseball.game;
 /**
  * Created by Timothy on 7/6/18.
  */
@@ -15,15 +16,26 @@ public enum Card {
     JACK(15),
     QUEEN(25),
     KING(0),
-    JOKER(-2);
+    JOKER(-2, 2);
 
     private final int pointValue;
+    private static final int DEFAULT_QUANTITY = 4;
+    private final int quantity;
 
     private Card(int pointValue) {
+    	this(pointValue, DEFAULT_QUANTITY);
+    }
+    
+    private Card(int pointValue, int quantity) {
         this.pointValue = pointValue;
+        this.quantity = quantity;
     }
 
     int getValue() {
         return pointValue;
+    }
+    
+    int getQuantity() {
+    	return quantity;
     }
 }
