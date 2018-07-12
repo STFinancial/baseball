@@ -26,7 +26,7 @@ public class Game {
 	private int round = 0;
 	Card lastDrawnCard = null;
 	private int playerWentOut = -1;
-	
+
 	private boolean gameOver = false;
 
 	public Game(int numberOfPlayers, int numberOfDecks, Rules rules) {
@@ -58,8 +58,11 @@ public class Game {
 	}
 
 	public Card viewCard(int player, int row, int column) {
-		// TODO Auto-generated method stub
 		return hands.get(player).viewCard(row, column);
+	}
+
+	public boolean isColumnCollapsed(int player, int column) {
+		return hands.get(player).peekCard(0, column) == null;
 	}
 
 	public void tick() {
@@ -145,35 +148,35 @@ public class Game {
 		if (lastDrawnCard != null) {
 			return; // Player will need to make another move after they see their drawn card
 		}
-		if(playerWentOut < 0) {
-			if(hands.get(currentPlayerIndex).isOut()) {
+		if (playerWentOut < 0) {
+			if (hands.get(currentPlayerIndex).isOut()) {
 				playerWentOut = currentPlayerIndex;
 			}
-		}else {
+		} else {
 			List<Card> toDiscard = hands.get(currentPlayerIndex).revealAll();
-			if(toDiscard != null) {
+			if (toDiscard != null) {
 				shoe.pushDiscard(toDiscard);
 			}
 		}
-		
+
 		currentPlayerIndex++;
 		if (currentPlayerIndex == numberOfPlayers) {
 			currentPlayerIndex = 0;
 			round++;
 		}
-		
-		if(currentPlayerIndex == playerWentOut) {
+
+		if (currentPlayerIndex == playerWentOut) {
 			gameOver = true;
 		}
 	}
-	
+
 	public void printGameOver() {
 		int minimum = 500000;
 		int winner = 0;
-		for(int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			int localTotal = hands.get(playerIndex).getRevealedTotal();
 			System.out.println("Player " + playerIndex + " " + localTotal);
-			if(localTotal < minimum) {
+			if (localTotal < minimum) {
 				winner = playerIndex;
 				minimum = localTotal;
 			}
@@ -215,20 +218,20 @@ public class Game {
 	public boolean isLastRound() {
 		return playerWentOut != -1;
 	}
-	
+
 	public boolean isGameOver() {
 		return gameOver;
 	}
-	
+
 	public int getWinner() {
-		if(!gameOver){
+		if (!gameOver) {
 			throw new IllegalStateException();
 		}
 		int minimum = 50000, winner = -1;
-		for(int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			int localTotal = hands.get(playerIndex).getRevealedTotal();
 			System.out.println("Player " + playerIndex + " " + localTotal);
-			if(localTotal < minimum) {
+			if (localTotal < minimum) {
 				winner = playerIndex;
 				minimum = localTotal;
 			}
@@ -243,11 +246,11 @@ public class Game {
 	public int getRound() {
 		return round;
 	}
-	
+
 	public int getPlayerWhoWentOut() {
 		return playerWentOut;
 	}
-	
+
 	public int getRevealedTotal(int player) {
 		return hands.get(player).getRevealedTotal();
 	}
@@ -255,5 +258,5 @@ public class Game {
 	public int getNumberOfPlayers() {
 		return numberOfPlayers;
 	}
-	
+
 }
