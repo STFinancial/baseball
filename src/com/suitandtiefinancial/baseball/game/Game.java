@@ -1,6 +1,7 @@
 package com.suitandtiefinancial.baseball.game;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.suitandtiefinancial.baseball.game.Rules.StartStyle;
@@ -40,7 +41,7 @@ public class Game {
 	}
 
 	private void createHands() {
-		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+	 	for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			Hand h = new Hand();
 			for (int row = 0; row < ROWS; row++) {
 				for (int column = 0; column < COLUMNS; column++) {
@@ -101,7 +102,7 @@ public class Game {
 
 	private void tickStartOfTurn() {
 		Move m = players.get(currentPlayerIndex).getMove();
-		List<Card> toDiscard = null;
+		List<Card> toDiscard = Collections.emptyList();
 		switch (m.getMoveType()) {
 		case DRAW:
 			lastDrawnCard = shoe.draw();
@@ -117,9 +118,7 @@ public class Game {
 		default:
 			throw new IllegalStateException("Illegal move " + m + " by player " + currentPlayerIndex);
 		}
-		if (toDiscard != null) {
-			shoe.pushDiscard(toDiscard);
-		}
+		shoe.pushDiscard(toDiscard);
 		broadcastMove(m);
 		finishPlayerTurn();
 	}
