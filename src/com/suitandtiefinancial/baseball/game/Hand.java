@@ -175,7 +175,7 @@ class Hand {
 		return s;
 	}
 
-	public boolean isOut() {
+	boolean isOut() {
 		for(int row = 0; row < Game.ROWS; row++) {
 			for(int column = 0; column < Game.COLUMNS; column++) {
 				if(!spots[row][column].isRevealed)
@@ -185,18 +185,18 @@ class Hand {
 		return true;
 	}
 
-	public List<Card> revealAll() {
+	List<Card> revealAll() {
 		List<Card> toReturn = null;
 		List<Card> temp;
 		
-		for(int row = 0; row < Game.ROWS; row++) {
-			for(int column = 0; column < Game.COLUMNS; column++) {
-				if(!spots[row][column].isRevealed) {
+		for (int row = 0; row < Game.ROWS; row++) {
+			for (int column = 0; column < Game.COLUMNS; column++) {
+				if (!spots[row][column].isRevealed) {
 					temp = flip(row, column);
-					if(temp!=null) {
+					if (temp != null) {
 						if(toReturn == null) {
 							toReturn = temp;
-						}else {
+						} else {
 							toReturn.addAll(temp);
 						}
 					}

@@ -12,14 +12,14 @@ import com.suitandtiefinancial.baseball.player.Player;
  *
  */
 public class Game {
+	public static final int ROWS = 3;
+	public static final int COLUMNS = 3;
 
 	private final int numberOfPlayers;
 	private final Rules rules;
 	private final Shoe shoe;
 	private final ArrayList<Hand> hands;
 	private final ArrayList<Player> players;
-	public static final int ROWS = 3;
-	public static final int COLUMNS = 3;
 	public boolean DEBUG_PRINT = false;
 
 	private int currentPlayerIndex = 0;
