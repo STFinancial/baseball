@@ -57,11 +57,11 @@ class Hand {
 	 *  Returns List of collapsed cards, or null if no cards collapsed.
 	 */
 	public List<Card> flip(int row, int column) {
-		if (spots[row][column].isRevealed) {
-			throw new IllegalStateException("Tried to flip an already revealed card");
-		} else if (spots[row][column].card == null) {
+		if (spots[row][column].card == null) {
 			throw new IllegalStateException("Tried to flip an already collapsed card");
-		}
+		}else if (spots[row][column].isRevealed) {
+			throw new IllegalStateException("Tried to flip an already revealed card");
+		} 
 		spots[row][column].isRevealed = true;
 		total += spots[row][column].card.getValue();
 		if (checkCollapse(column)) {

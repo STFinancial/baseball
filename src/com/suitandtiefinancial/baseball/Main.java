@@ -1,19 +1,14 @@
 package com.suitandtiefinancial.baseball;
 
-import java.util.Random;
-
-import com.suitandtiefinancial.baseball.game.Game;
-import com.suitandtiefinancial.baseball.game.Rules;
+import com.suitandtiefinancial.baseball.player.EVPlayer;
 import com.suitandtiefinancial.baseball.player.Player;
-import com.suitandtiefinancial.baseball.player.RandomPlayer;
 import com.suitandtiefinancial.baseball.player.RushPlayer;
-import com.suitandtiefinancial.baseball.player.StraightFlipperPlayer;
 import com.suitandtiefinancial.baseball.testbench.TestBench;
 
 public class Main {
 	public static void main(String[] args) {
 		
-		//doOneDetailed();
+		doOneDetailed();
 		doMultipleSummaryOnly(10000);
 
 	}
@@ -22,15 +17,14 @@ public class Main {
 		TestBench tb = new TestBench(numberOfGames, false, getFocusPlayer(), getFillPlayers());
 		tb.simulate();
 		tb.printSummary();
-		
 	}
 
 	private static Player getFocusPlayer() {
-		return new RushPlayer();
+		return new EVPlayer();
 	}
 
 	private static Player[] getFillPlayers() {
-		Player[] players = {new StraightFlipperPlayer(), new StraightFlipperPlayer(), new StraightFlipperPlayer(), new StraightFlipperPlayer(), new StraightFlipperPlayer()};
+		Player[] players = {new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer()};
 		return players;
 	}
 	
