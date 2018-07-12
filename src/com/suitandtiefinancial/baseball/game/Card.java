@@ -31,11 +31,11 @@ public enum Card {
         this.quantity = quantity;
     }
 
-    int getValue() {
+    public int getValue() {
         return pointValue;
     }
     
-    int getQuantity() {
+    public int getQuantity() {
     	return quantity;
     }
 }

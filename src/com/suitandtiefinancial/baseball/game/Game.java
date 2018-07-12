@@ -220,4 +220,40 @@ public class Game {
 		return gameOver;
 	}
 	
+	public int getWinner() {
+		if(!gameOver){
+			throw new IllegalStateException();
+		}
+		int minimum = 50000, winner = -1;
+		for(int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+			int localTotal = hands.get(playerIndex).getRevealedTotal();
+			System.out.println("Player " + playerIndex + " " + localTotal);
+			if(localTotal < minimum) {
+				winner = playerIndex;
+				minimum = localTotal;
+			}
+		}
+		return winner;
+	}
+
+	public Card getDiscardUpCard() {
+		return shoe.peekDiscard();
+	}
+
+	public int getRound() {
+		return round;
+	}
+	
+	public int getPlayerWhoWentOut() {
+		return playerWentOut;
+	}
+	
+	public int getRevealedTotal(int player) {
+		return hands.get(player).getRevealedTotal();
+	}
+
+	public int getNumberOfPlayers() {
+		return numberOfPlayers;
+	}
+	
 }
