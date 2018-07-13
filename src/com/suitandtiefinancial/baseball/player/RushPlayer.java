@@ -1,17 +1,17 @@
 package com.suitandtiefinancial.baseball.player;
 
 import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.Game;
+import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class RushPlayer implements Player {
-	private Game g;
+	private GameView g;
 	private int index;
 	private int row, column;
 	private float downCardEv;
 
-	public void initalize(Game g, int index) {
+	public void initialize(GameView g, int index) {
 		this.g = g;
 		this.index = index;
 		row = 0;
@@ -53,7 +53,7 @@ public class RushPlayer implements Player {
 
 		Move m = new Move(mt, row, column);
 		column++;
-		if (column == Game.COLUMNS) {
+		if (column == GameView.COLUMNS) {
 			column = 0;
 			row++;
 		}

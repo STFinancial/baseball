@@ -32,6 +32,8 @@ class Shoe {
 
     /** Show top card on the discard pile */
     Card peekDiscard() { return discard.get(discard.size() - 1); }
+    /** Show full discard pile */
+    List<Card> peekFullDiscard() { return Collections.unmodifiableList(discard); }
 
     /** Discard provided card */
     void pushDiscard(Card card) { discard.add(card); }

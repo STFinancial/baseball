@@ -1,19 +1,19 @@
 package com.suitandtiefinancial.baseball.player;
 
 import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.Game;
+import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class EVPlayer implements Player {
-	private Game g;
+	private GameView g;
 	private int index;
 	private float downCardEv;
 	boolean doneFirstOpener = false;
 	int worstCardRow, worstCardColumn;
 	float worstCardValue;
 
-	public void initalize(Game g, int index) {
+	public void initialize(GameView g, int index) {
 		this.g = g;
 		this.index = index;
 		if (downCardEv == 0) {
@@ -61,11 +61,11 @@ public class EVPlayer implements Player {
 		worstCardValue = -9999;
 		float currentCardValue = -1;
 		
-		for (int column = 0; column < Game.COLUMNS; column++) {
+		for (int column = 0; column < GameView.COLUMNS; column++) {
 			if (g.isColumnCollapsed(index, column)) {
 				continue;
 			}
-			for (int row = 0; row < Game.ROWS; row++) {
+			for (int row = 0; row < GameView.ROWS; row++) {
 				Card c = g.viewCard(index, row, column);
 
 				if (c == null) {
@@ -84,8 +84,8 @@ public class EVPlayer implements Player {
 	}
 
 	private Move flipMove() {
-		for (int row = 0; row < Game.ROWS; row++) {
-			for (int column = 0; column < Game.COLUMNS; column++) {
+		for (int row = 0; row < GameView.ROWS; row++) {
+			for (int column = 0; column < GameView.COLUMNS; column++) {
 				if (g.viewCard(index, row, column) == null && !g.isColumnCollapsed(index, column)) {
 					return new Move(MoveType.FLIP, row, column);
 				}

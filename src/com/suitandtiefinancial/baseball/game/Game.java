@@ -21,6 +21,7 @@ public class Game {
 	private final Shoe shoe;
 	private final ArrayList<Hand> hands;
 	private final ArrayList<Player> players;
+	private final GameView view;
 	public boolean DEBUG_PRINT = false;
 
 	private int currentPlayerIndex = 0;
@@ -36,11 +37,13 @@ public class Game {
 		this.rules = rules;
 		hands = new ArrayList<Hand>(numberOfPlayers);
 		players = new ArrayList<Player>(numberOfPlayers);
-		createHands();
+		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, hands, shoe);
+
+		dealHands();
 		shoe.pushDiscard(shoe.draw());
 	}
 
-	private void createHands() {
+	private void dealHands() {
 	 	for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			Hand h = new Hand();
 			for (int row = 0; row < ROWS; row++) {
@@ -50,20 +53,11 @@ public class Game {
 			}
 			hands.add(h);
 		}
-
 	}
 
 	public int addPlayer(Player p) {
 		players.add(p);
 		return players.size() - 1;
-	}
-
-	public Card viewCard(int player, int row, int column) {
-		return hands.get(player).viewCard(row, column);
-	}
-
-	public boolean isColumnCollapsed(int player, int column) {
-		return hands.get(player).peekCard(0, column) == null;
 	}
 
 	public void tick() {
@@ -238,11 +232,7 @@ public class Game {
 		return winner;
 	}
 
-	public Card getDiscardUpCard() {
-		return shoe.peekDiscard();
-	}
-
-	public int getRound() {
+	int getRound() {
 		return round;
 	}
 
@@ -250,12 +240,10 @@ public class Game {
 		return playerWentOut;
 	}
 
-	public int getRevealedTotal(int player) {
-		return hands.get(player).getRevealedTotal();
-	}
+	public GameView getGameView() { return view; }
 
-	public int getNumberOfPlayers() {
-		return numberOfPlayers;
+	public GameRecord generateGameRecord(int focusPlayerIndex) {
+		return new GameRecord(focusPlayerIndex, this);
 	}
 
 }

@@ -24,7 +24,7 @@ public class Main {
 	}
 
 	private static Player[] getFillPlayers() {
-		Player[] players = {new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer()};
+		Player[] players = { new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer(), new RushPlayer() };
 		return players;
 	}
 	

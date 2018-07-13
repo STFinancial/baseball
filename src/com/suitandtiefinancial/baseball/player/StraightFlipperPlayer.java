@@ -3,16 +3,16 @@ package com.suitandtiefinancial.baseball.player;
 import java.util.Random;
 
 import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.Game;
+import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class StraightFlipperPlayer implements Player {
-	private Game g;
+	private GameView g;
 	private int index;
 	private int row, column;
 
-	public void initalize(Game g, int index) {
+	public void initialize(GameView g, int index) {
 		this.g = g;
 		this.index = index;
 		row = 0;
@@ -32,7 +32,7 @@ public class StraightFlipperPlayer implements Player {
 	private Move flipNext() {
 		Move m = new Move(MoveType.FLIP, row, column);
 		column++;
-		if(column == Game.COLUMNS) {
+		if (column == GameView.COLUMNS) {
 			column = 0;
 			row++;
 		}

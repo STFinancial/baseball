@@ -3,28 +3,28 @@ package com.suitandtiefinancial.baseball.player;
 import java.util.Random;
 
 import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.Game;
+import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class RandomPlayer implements Player {
 	private final Random r;
-	private Game g;
+	private GameView g;
 	private int index;
 
 	public RandomPlayer(Random r) {
 		this.r = r;
 	}
 
-	public void initalize(Game g, int index) {
+	public void initialize(GameView g, int index) {
 		this.g = g;
 		this.index = index;
 	}
 
 	@Override
 	public Move getOpener() {
-		int row = r.nextInt(Game.ROWS);
-		int column = r.nextInt(Game.COLUMNS);
+		int row = r.nextInt(GameView.ROWS);
+		int column = r.nextInt(GameView.COLUMNS);
 		if (r.nextBoolean()) {
 			if (g.viewCard(index, row, column) != null) {
 				// on the off chance we already flipped this card, we need a different legal
@@ -43,10 +43,10 @@ public class RandomPlayer implements Player {
 		if(nextInt==0) {
 			return new Move(MoveType.DRAW);
 		}else if(nextInt==1){
-			return new Move(MoveType.REPLACE_WITH_DISCARD, r.nextInt(Game.ROWS), r.nextInt(Game.COLUMNS));
+			return new Move(MoveType.REPLACE_WITH_DISCARD, r.nextInt(GameView.ROWS), r.nextInt(GameView.COLUMNS));
 		}else {
-			int row = r.nextInt(Game.ROWS);
-			int column = r.nextInt(Game.COLUMNS);
+			int row = r.nextInt(GameView.ROWS);
+			int column = r.nextInt(GameView.COLUMNS);
 			if (g.viewCard(index, row, column) != null) {
 				return getMove();
 			}else {
@@ -60,7 +60,7 @@ public class RandomPlayer implements Player {
 		if(r.nextBoolean()) {
 			return new Move(MoveType.DECLINE_DRAWN_CARD);
 		}else {
-			return new Move(MoveType.REPLACE_WITH_DRAWN_CARD, r.nextInt(Game.ROWS), r.nextInt(Game.COLUMNS));
+			return new Move(MoveType.REPLACE_WITH_DRAWN_CARD, r.nextInt(GameView.ROWS), r.nextInt(GameView.COLUMNS));
 		}
 	}
 
