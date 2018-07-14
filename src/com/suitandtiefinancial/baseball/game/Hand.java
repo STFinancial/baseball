@@ -154,7 +154,9 @@ class Hand {
 	boolean isOut() {
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed || !spots[row][column].isCollapsed) return false;
+				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -165,7 +167,7 @@ class Hand {
 		
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed || !spots[row][column].isCollapsed) {
+				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
 					toReturn.addAll(flip(row, column));
 				}
 			}
