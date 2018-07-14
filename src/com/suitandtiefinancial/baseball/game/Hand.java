@@ -7,8 +7,6 @@ import java.util.List;
 /**
  * Created by Timothy on 7/6/18.
  * 
- * TODO @Boxxy If we don't trust the AIs, then we can never give direct access to this object because of the public functions not having gaurdrails
- * However, it seems easier/faster if we trust the AIs and just give them full object access, as opposed to encapsulating behind events or something
  */
 class Hand {
 	private Spot[][] spots;
@@ -111,11 +109,13 @@ class Hand {
 	}
 
 	Card viewCard(int row, int column) {
-		if (spots[row][column].isRevealed) {
-			return spots[row][column].card;
-		} else {
-			return null;
+		if (!spots[row][column].isRevealed) {
+			throw new IllegalStateException("Tried to view hidden card, use peek if you have access or check for revealed first");
 		}
+		return spots[row][column].card;
+	}
+	boolean isCardRevealed(int row, int column) {
+		return spots[row][column].isRevealed;
 	}
 	
 	Card peekCard(int row, int column) {
@@ -154,7 +154,9 @@ class Hand {
 	boolean isOut() {
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed || !spots[row][column].isCollapsed) return false;
+				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -165,7 +167,7 @@ class Hand {
 		
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed || !spots[row][column].isCollapsed) {
+				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
 					toReturn.addAll(flip(row, column));
 				}
 			}

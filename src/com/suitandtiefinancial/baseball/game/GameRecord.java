@@ -9,6 +9,8 @@ public class GameRecord {
 	public final int winnerScore;
 	public final int secondPlaceScore;
 	public final float averageScore;
+	public final float averageCollapses;
+	public final int playerCollapses;
 
 	GameRecord(int playerIndex, Game g) {
 		this.playerIndex = playerIndex;
@@ -18,6 +20,8 @@ public class GameRecord {
 		int tempFirstIndex = -1;
 		int tempFirst = 40000;
 		int sum = 0;
+		int tempTotalCollapses = 0;
+		int tempPlayerCollapses = 0;
 		for (int player = 0; player < g.getGameView().getNumberOfPlayers(); player++) {
 			int tempTotal = g.getGameView().getRevealedTotal(player);
 			if (tempTotal < tempFirst) {
@@ -28,7 +32,17 @@ public class GameRecord {
 				tempSecond = tempTotal;
 			}
 			sum += tempTotal;
+			for(int column = 0; column < Game.COLUMNS; column++) {
+				if(g.getGameView().isColumnCollapsed(player, column)) {
+					tempTotalCollapses++;
+					if(player == playerIndex) {
+						tempPlayerCollapses++;
+					}
+				}
+			}
 		}
+		averageCollapses = (1f * tempTotalCollapses) / g.getGameView().getNumberOfPlayers();
+		playerCollapses = tempPlayerCollapses;
 		averageScore = (1f * sum) / g.getGameView().getNumberOfPlayers();
 		winnerScore = tempFirst;
 		secondPlaceScore = tempSecond;
