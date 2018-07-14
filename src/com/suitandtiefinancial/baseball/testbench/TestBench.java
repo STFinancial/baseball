@@ -86,6 +86,8 @@ public class TestBench {
         int gamesWon = 0;
         float averageScoreEveryone = 0;
         float averageScoreUs = 0;
+        float averageCollapseEveryone = 0;
+        float averageCollapseUs = 0;
 
         for (GameRecord gr : history) {
             gamesPlayed++;
@@ -94,12 +96,17 @@ public class TestBench {
             }
             averageScoreEveryone += gr.averageScore;
             averageScoreUs += gr.playerScore;
+            averageCollapseEveryone += gr.averageCollapses;
+            averageCollapseUs += gr.playerCollapses;
         }
         averageScoreEveryone /= gamesPlayed;
         averageScoreUs /= gamesPlayed;
+        averageCollapseEveryone /= gamesPlayed;
+        averageCollapseUs /= gamesPlayed;
 
         System.out.println("Played " + gamesPlayed + " games, and won " + gamesWon);
         System.out.println("We had an average score of " + averageScoreUs + " compared to the global average score at "
                 + averageScoreEveryone);
+        System.out.println("We had an average collapses of " + averageCollapseUs + " compared to teh global average collapses at " + averageCollapseEveryone);
     }
 }

@@ -47,9 +47,9 @@ public class EVPlayer implements Player {
 
 		if (g.getDiscardUpCard().getValue() < downCardEv) {
 			return discardMove();
-		} else if (findWorstCardValue() > downCardEv){
+		} else if (findWorstCardValue() > downCardEv) {
 			return new Move(MoveType.DRAW);
-		}else {
+		} else {
 			return flipMove();
 		}
 	}
@@ -60,18 +60,17 @@ public class EVPlayer implements Player {
 		worstCardColumn = -1;
 		worstCardValue = -9999;
 		float currentCardValue = -1;
-		
+
 		for (int column = 0; column < GameView.COLUMNS; column++) {
 			if (g.isColumnCollapsed(index, column)) {
 				continue;
 			}
 			for (int row = 0; row < GameView.ROWS; row++) {
-				Card c = g.viewCard(index, row, column);
 
-				if (c == null) {
+				if (!g.isCardRevealed(index, row, column)) {
 					currentCardValue = downCardEv;
 				} else {
-					currentCardValue = c.getValue();
+					currentCardValue = g.viewCard(index, row, column).getValue();
 				}
 				if (currentCardValue > worstCardValue) {
 					worstCardRow = row;
@@ -84,9 +83,12 @@ public class EVPlayer implements Player {
 	}
 
 	private Move flipMove() {
-		for (int row = 0; row < GameView.ROWS; row++) {
-			for (int column = 0; column < GameView.COLUMNS; column++) {
-				if (g.viewCard(index, row, column) == null && !g.isColumnCollapsed(index, column)) {
+		for (int column = 0; column < GameView.COLUMNS; column++) {
+			if(g.isColumnCollapsed(index, column)) {
+				continue;
+			}
+			for (int row = 0; row < GameView.ROWS; row++) {
+				if (!g.isCardRevealed(index, row, column)) {
 					return new Move(MoveType.FLIP, row, column);
 				}
 			}
@@ -101,9 +103,9 @@ public class EVPlayer implements Player {
 
 	@Override
 	public Move getMoveWithDraw(Card c) {
-		if(c.getValue() < worstCardValue) {
+		if (c.getValue() < worstCardValue) {
 			return new Move(MoveType.REPLACE_WITH_DRAWN_CARD, worstCardRow, worstCardColumn);
-		}else {
+		} else {
 			return new Move(MoveType.DECLINE_DRAWN_CARD);
 		}
 	}

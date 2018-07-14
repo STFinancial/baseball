@@ -38,6 +38,9 @@ public final class GameView {
     public Card viewCard(int player, int row, int column) {
         return hands.get(player).viewCard(row, column);
     }
+    public boolean isCardRevealed(int player, int row, int column) {
+        return hands.get(player).isCardRevealed(row, column);
+    }
 
     public Card getDiscardUpCard() {
         return shoe.peekDiscard();
