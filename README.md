@@ -29,33 +29,33 @@ The winner is the player with the lowest point value sum of the cards in their h
 ## Scoring
 The card point values are as follows:
 
-Ace: 1
+##### Ace: 1
 
-Two: 2
+##### Two: 2
 
-Three: 3
+##### Three: 3
 
-Four: 4
+##### Four: 4
 
-Five: 5
+##### Five: 5
 
-Six: 6
+##### Six: 6
 
-Seven: 7
+##### Seven: 7
 
-Eight: 8
+##### Eight: 8
 
-Nine: 9
+##### Nine: 9
 
-Ten: 10
+##### Ten: 10
 
-Jack: 15
+##### Jack: 15
 
-Queen: 25
+##### Queen: 25
 
-King: 0
+##### King: 0
 
-Joker: -2
+##### Joker: -2
 
 ## Misc
 If the shoe runs out of cards during the duration of the game, the discard pile is shuffled and becomes the new shoe.
