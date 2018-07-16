@@ -30,18 +30,31 @@ The winner is the player with the lowest point value sum of the cards in their h
 The card point values are as follows:
 
 Ace: 1
+
 Two: 2
+
 Three: 3
+
 Four: 4
+
 Five: 5
+
 Six: 6
+
 Seven: 7
+
 Eight: 8
+
 Nine: 9
+
 Ten: 10
+
 Jack: 15
+
 Queen: 25
+
 King: 0
+
 Joker: -2
 
 ## Misc
