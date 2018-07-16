@@ -32,7 +32,7 @@ class Shoe {
 
     /** Show top card on the discard pile */
     Card peekDiscard() { return discard.get(discard.size() - 1); }
-    /** Show full discard pile */
+    /** @return An immutable list containing the full discard pile, with the last card in the list being on top */
     List<Card> peekFullDiscard() { return Collections.unmodifiableList(discard); }
 
     /** Discard provided card */

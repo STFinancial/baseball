@@ -20,6 +20,7 @@ public class Game {
 	private final Rules rules;
 	private final Shoe shoe;
 	private final ArrayList<Hand> hands;
+	private final ArrayList<HandView> handViews;
 	private final ArrayList<Player> players;
 	private final GameView view;
 	public boolean DEBUG_PRINT = false;
@@ -36,22 +37,32 @@ public class Game {
 		shoe = new Shoe(numberOfDecks);
 		this.rules = rules;
 		hands = new ArrayList<Hand>(numberOfPlayers);
+		handViews = new ArrayList<HandView>(numberOfPlayers);
+		createHandsAndHandViews();
 		players = new ArrayList<Player>(numberOfPlayers);
-		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, hands, shoe);
+		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, handViews, shoe);
 
 		dealHands();
 		shoe.pushDiscard(shoe.draw());
 	}
 
-	private void dealHands() {
-	 	for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+	private void createHandsAndHandViews() {
+		for (int player = 0; player < numberOfPlayers; ++player) {
 			Hand h = new Hand();
+			hands.add(h);
+			handViews.add(new HandView(h));
+		}
+	}
+
+	private void dealHands() {
+		Hand h;
+	 	for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
+			h = hands.get(playerIndex);
 			for (int row = 0; row < ROWS; row++) {
 				for (int column = 0; column < COLUMNS; column++) {
 					h.dealCard(shoe.draw(), row, column);
 				}
 			}
-			hands.add(h);
 		}
 	}
 
@@ -142,7 +153,7 @@ public class Game {
 			return; // Player will need to make another move after they see their drawn card
 		}
 		if (playerWentOut < 0) {
-			if (hands.get(currentPlayerIndex).isOut()) {
+			if (HandUtils.isOut(hands.get(currentPlayerIndex))) {
 				playerWentOut = currentPlayerIndex;
 			}
 		} else {
@@ -167,7 +178,7 @@ public class Game {
 		int minimum = 500000;
 		int winner = 0;
 		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
-			int localTotal = hands.get(playerIndex).getRevealedTotal();
+			int localTotal = HandUtils.getRevealedTotal(hands.get(playerIndex));
 			System.out.println("Player " + playerIndex + " " + localTotal);
 			if (localTotal < minimum) {
 				winner = playerIndex;
@@ -200,7 +211,7 @@ public class Game {
 		s += "\n";
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
-				s += hands.get(playerIndex).displayRow(row) + "  ";
+				s += HandUtils.displayRow(hands.get(playerIndex), row) + "  ";
 			}
 			s += "\n";
 		}
@@ -222,7 +233,7 @@ public class Game {
 		}
 		int minimum = 50000, winner = -1;
 		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
-			int localTotal = hands.get(playerIndex).getRevealedTotal();
+			int localTotal = HandUtils.getRevealedTotal(hands.get(playerIndex));
 			System.out.println("Player " + playerIndex + " " + localTotal);
 			if (localTotal < minimum) {
 				winner = playerIndex;

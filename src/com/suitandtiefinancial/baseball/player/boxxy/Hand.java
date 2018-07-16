@@ -142,11 +142,11 @@ class Hand {
 	}
 
 	public int getRowOfFirstHiddenCardInColumn(int column) {
-		for(int row = 0; row < rows; row++) {
-			if(!isCardRevealed(row, column)) {
+		for (int row = 0; row < rows; row++) {
+			if (!isCardRevealed(row, column)) {
 				return row;
 			}
 		}
-		throw new IllegalStateException();
+		throw new IllegalStateException("No hidden cards found in column: " + column);
 	}
 }

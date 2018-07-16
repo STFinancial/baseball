@@ -84,7 +84,7 @@ public class EVPlayer implements Player {
 
 	private Move flipMove() {
 		for (int column = 0; column < GameView.COLUMNS; column++) {
-			if(g.isColumnCollapsed(index, column)) {
+			if (g.isColumnCollapsed(index, column)) {
 				continue;
 			}
 			for (int row = 0; row < GameView.ROWS; row++) {

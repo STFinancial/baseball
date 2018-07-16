@@ -16,43 +16,39 @@ public final class GameView {
     private final int numDecks;
     private final int numPlayers;
     private final List<Player> players;
-    private final List<Hand> hands;
+    private final List<HandView> handViews;
     private final Shoe shoe;
 
-    GameView(Game game, Rules rules, int numDecks, int numPlayers, List<Player> players, List<Hand> hands, Shoe shoe) {
+    GameView(Game game, Rules rules, int numDecks, int numPlayers, List<Player> players, List<HandView> handViews, Shoe shoe) {
         this.game = game;
         this.rules = rules;
         this.numDecks = numDecks;
         this.numPlayers = numPlayers;
         this.players = players;
-        this.hands = hands;
+        this.handViews = handViews;
         this.shoe = shoe;
     }
 
     public int getNumberOfPlayers() {
         return numPlayers;
     }
-
     public int getNumDecks() { return numDecks; }
 
     public Card viewCard(int player, int row, int column) {
-        return hands.get(player).viewCard(row, column);
+        return handViews.get(player).viewCard(row, column);
     }
     public boolean isCardRevealed(int player, int row, int column) {
-        return hands.get(player).isCardRevealed(row, column);
+        return handViews.get(player).getSpotState(row, column) == SpotState.FACE_UP;
+    }
+    public boolean isColumnCollapsed(int player, int column) {
+        return handViews.get(player).getSpotState(0, column) == SpotState.COLLAPSED;
+    }
+    public int getRevealedTotal(int player) {
+        return handViews.get(player).getRevealedTotal();
     }
 
     public Card getDiscardUpCard() {
         return shoe.peekDiscard();
     }
-
-    public int getRound() { return game.getRound(); }
-
-    public boolean isColumnCollapsed(int player, int column) {
-        return hands.get(player).peekCard(0, column) == null;
-    }
-
-    public int getRevealedTotal(int player) {
-        return hands.get(player).getRevealedTotal();
-    }
+    public List<Card> getDiscard() { return shoe.peekFullDiscard(); }
 }

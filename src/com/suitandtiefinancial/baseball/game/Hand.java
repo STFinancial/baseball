@@ -10,13 +10,10 @@ import java.util.List;
  */
 class Hand {
 	private Spot[][] spots;
-	/** The {@link Spot#isRevealed revealed} point sum of the {@link Hand}. */
-	private int total;
 
 	private class Spot {
-		boolean isRevealed = false;
-		boolean isCollapsed = false;
 		Card card = null;
+		SpotState state = SpotState.FACE_DOWN;
 	}
 
 	Hand() {
@@ -26,22 +23,17 @@ class Hand {
 				spots[row][column] = new Spot();
 			}
 		}
-		total = 0;
 	}
 
 	List<Card> replace(Card replacement, int row, int column) {
 		Spot s = spots[row][column];
-		if (spots[row][column].isCollapsed) {
-			throw new IllegalStateException("Tried to replace an already collapsed card");
-		}
-		if (s.isRevealed) {
-			total -= s.card.getValue();
+		if (s.state == SpotState.COLLAPSED) {
+			throw new IllegalStateException("Tried to replace an already collapsed card.");
 		}
 
 		Card replacedCard = s.card;
 		s.card = replacement;
-		total += replacement.getValue();
-		s.isRevealed = true;
+		s.state = SpotState.FACE_UP;
 
 		List<Card> returnCardList = new ArrayList<>(4);
 		if (checkCollapse(column)) {
@@ -56,13 +48,13 @@ class Hand {
 	 *  Returns List of collapsed cards, or null if no cards collapsed.
 	 */
 	List<Card> flip(int row, int column) {
-		if (spots[row][column].isCollapsed) {
+		Spot s = spots[row][column];
+		if (s.state == SpotState.COLLAPSED) {
 			throw new IllegalStateException("Tried to flip an already collapsed card");
-		} else if (spots[row][column].isRevealed) {
+		} else if (s.state == SpotState.FACE_UP) {
 			throw new IllegalStateException("Tried to flip an already revealed card");
-		} 
-		spots[row][column].isRevealed = true;
-		total += spots[row][column].card.getValue();
+		}
+		s.state = SpotState.FACE_UP;
 		if (checkCollapse(column)) {
 			return collapse(column);
 		} else {
@@ -71,7 +63,7 @@ class Hand {
 	}
 
 	private boolean checkCollapse(int column) {
-		return spots[0][column].isRevealed && spots[1][column].isRevealed && spots[2][column].isRevealed
+		return spots[0][column].state == SpotState.FACE_UP && spots[1][column].state == SpotState.FACE_UP && spots[2][column].state == SpotState.FACE_UP
 				&& spots[0][column].card.getValue() == spots[1][column].card.getValue()
 				&& spots[1][column].card.getValue() == spots[2][column].card.getValue();
 
@@ -91,75 +83,24 @@ class Hand {
 		for (int row = 0; row < Game.ROWS; row++) {
 			s = spots[row][column];
 			returnList.add(s.card);
-			total -= s.card.getValue();
 			s.card = null;
-			s.isCollapsed = true;
+			s.state = SpotState.COLLAPSED;
 		}
 		return returnList;
-	}
-
-	int getRevealedTotal() {
-		return total;
 	}
 
 	/** Used to populate the hand before the first turn. */
 	void dealCard(Card draw, int row, int column) {
 		spots[row][column].card = draw;
-		spots[row][column].isRevealed = false;
+		spots[row][column].state = SpotState.FACE_DOWN;
 	}
 
-	Card viewCard(int row, int column) {
-		if (!spots[row][column].isRevealed) {
-			throw new IllegalStateException("Tried to view hidden card, use peek if you have access or check for revealed first");
-		}
-		return spots[row][column].card;
-	}
-	boolean isCardRevealed(int row, int column) {
-		return spots[row][column].isRevealed;
+	SpotState getSpotState(int row, int column) {
+		return spots[row][column].state;
 	}
 	
 	Card peekCard(int row, int column) {
 		return spots[row][column].card;
-	}
-
-	String displayRow(int row) {
-		String s = "";
-		for (int column = 0; column < Game.COLUMNS; column++) {
-			if (!spots[row][column].isRevealed) {
-				s += "X";
-			} else if (spots[row][column].card == null) {
-				s += " ";
-			} else {
-				switch(spots[row][column].card) {
-				case ACE: s += "A"; break;
-				case EIGHT: s += "8"; break;
-				case FIVE: s += "5"; break;
-				case FOUR: s += "4"; break;
-				case JACK: s += "J"; break;
-				case JOKER: s += "E"; break;
-				case KING: s += "K"; break;
-				case NINE: s += "9"; break;
-				case QUEEN: s += "Q"; break;
-				case SEVEN: s += "7"; break;
-				case SIX: s += "6"; break;
-				case TEN: s += "T"; break;
-				case THREE: s += "3"; break;
-				case TWO: s += "2"; break;
-				}
-			}
-		}
-		return s;
-	}
-
-	boolean isOut() {
-		for (int row = 0; row < Game.ROWS; row++) {
-			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
-					return false;
-				}
-			}
-		}
-		return true;
 	}
 
 	List<Card> revealAll() {
@@ -167,7 +108,7 @@ class Hand {
 		
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int column = 0; column < Game.COLUMNS; column++) {
-				if (!spots[row][column].isRevealed && !spots[row][column].isCollapsed) {
+				if (spots[row][column].state == SpotState.FACE_DOWN || spots[row][column].state == SpotState.FACE_DOWN_PEEKED) {
 					toReturn.addAll(flip(row, column));
 				}
 			}

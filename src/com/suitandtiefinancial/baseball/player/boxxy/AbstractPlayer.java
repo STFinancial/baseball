@@ -93,8 +93,6 @@ public abstract class AbstractPlayer implements Player {
 		// We don't peek
 	}
 
-
-
 	protected Card getDiscard() {
 		return gv.getDiscardUpCard();
 	}
