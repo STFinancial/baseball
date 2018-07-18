@@ -1,4 +1,4 @@
-package com.suitandtiefinancial.baseball.player.boxxy;
+package com.suitandtiefinancial.baseball.player.boxxy.archive;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,6 +73,7 @@ class Hand {
 		return count;
 	}
 
+	
 	public int getColumnWithCard(Card c, int numberOfCards) {
 		for (int column = 0; column < getColumns(); column++) {
 			if (getCountOfCardInColumn(column, c) == numberOfCards) {
@@ -81,7 +82,7 @@ class Hand {
 		}
 		return -1;
 	}
-
+	
 	private class Column {
 		private final List<Tile> tiles;
 
@@ -148,5 +149,4 @@ class Hand {
 		}
 		throw new IllegalStateException("No hidden cards found in column: " + column);
 	}
-
 }
