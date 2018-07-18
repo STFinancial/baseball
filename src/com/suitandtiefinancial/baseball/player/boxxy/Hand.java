@@ -50,19 +50,6 @@ class Hand {
 		return rows;
 	}
 
-	public int getColumnWithMostHiddenCards() {
-		int max = 0;
-		int maxColumn = 0;
-		for (int column = 0; column < cols; column++) {
-			int count = getHiddenCardsInColumn(column);
-			if (count > max) {
-				max = count;
-				maxColumn = column;
-			}
-		}
-		return maxColumn;
-	}
-
 	public int getHiddenCardsInColumn(int column) {
 		int count = 0;
 		for (Tile t : columns.get(column).tiles) {
@@ -73,13 +60,13 @@ class Hand {
 		return count;
 	}
 
-	public int getColumnWithCard(Card c, int numberOfCards) {
-		for (int column = 0; column < getColumns(); column++) {
-			if (getCountOfCardInColumn(column, c) == numberOfCards) {
-				return column;
+	public int getRowOfFirstHiddenCardInColumn(int column) {
+		for (int row = 0; row < rows; row++) {
+			if (!isCardRevealed(row, column)) {
+				return row;
 			}
 		}
-		return -1;
+		throw new IllegalStateException("No hidden cards found in column: " + column);
 	}
 
 	private class Column {
@@ -138,15 +125,6 @@ class Hand {
 			return isRevealed;
 		}
 
-	}
-
-	public int getRowOfFirstHiddenCardInColumn(int column) {
-		for (int row = 0; row < rows; row++) {
-			if (!isCardRevealed(row, column)) {
-				return row;
-			}
-		}
-		throw new IllegalStateException("No hidden cards found in column: " + column);
 	}
 
 }
