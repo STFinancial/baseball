@@ -3,7 +3,7 @@ package com.suitandtiefinancial.baseball;
 import com.suitandtiefinancial.baseball.player.EVPlayer;
 import com.suitandtiefinancial.baseball.player.Player;
 import com.suitandtiefinancial.baseball.player.RushPlayer;
-import com.suitandtiefinancial.baseball.player.boxxy.CollapsePlayer;
+import com.suitandtiefinancial.baseball.player.boxxy.BoxxyPlayer;
 import com.suitandtiefinancial.baseball.testbench.TestBench;
 
 public class Main {
@@ -21,7 +21,7 @@ public class Main {
 	}
 
 	private static Player getFocusPlayer() {
-		return new CollapsePlayer();
+		return new BoxxyPlayer();
 	}
 
 	private static Player[] getFillPlayers(int numberOfPlayers) {

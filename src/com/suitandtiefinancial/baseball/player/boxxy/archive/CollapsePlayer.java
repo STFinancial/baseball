@@ -1,4 +1,4 @@
-package com.suitandtiefinancial.baseball.player.boxxy;
+package com.suitandtiefinancial.baseball.player.boxxy.archive;
 
 import java.awt.Point;
 
