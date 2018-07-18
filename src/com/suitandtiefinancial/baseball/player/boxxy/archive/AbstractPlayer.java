@@ -1,4 +1,4 @@
-package com.suitandtiefinancial.baseball.player.boxxy;
+package com.suitandtiefinancial.baseball.player.boxxy.archive;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 import com.suitandtiefinancial.baseball.player.Player;
 
-public abstract class AbstractPlayer implements Player {
+abstract class AbstractPlayer implements Player {
 	protected final float cardEv;
 	protected Hand hand;
 	private int index;
