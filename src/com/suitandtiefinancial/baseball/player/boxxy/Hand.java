@@ -66,7 +66,7 @@ class Hand {
 				return row;
 			}
 		}
-		throw new IllegalStateException("No hidden cards found in column: " + column);
+		throw new IllegalStateException("No hidden cards found in` column: " + column);
 	}
 
 	private class Column {
