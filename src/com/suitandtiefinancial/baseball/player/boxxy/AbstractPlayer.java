@@ -17,7 +17,7 @@ abstract class AbstractPlayer implements Player {
 	protected final float cardEv;
 	protected Hand hand;
 	private int index;
-	private GameView gv;
+	protected GameView gv;
 	protected Move lastMove;
 	protected Set<PossibleMove> possibleMoves;
 	Card drawnCard;
@@ -52,7 +52,7 @@ abstract class AbstractPlayer implements Player {
 	public Move getMoveWithDraw(Card c) {
 		return getMoveInternal(c);
 	}
-	
+
 	private Move getMoveInternal(Card c) {
 		drawnCard = c;
 		updateHandFromLastMove();
@@ -106,8 +106,6 @@ abstract class AbstractPlayer implements Player {
 		}
 	}
 
-	abstract void evaluateMovesPreCalculations();
-
 	float evaluateMove(Move move) {
 		switch (move.getMoveType()) {
 		case DECLINE_DRAWN_CARD:
@@ -126,7 +124,7 @@ abstract class AbstractPlayer implements Player {
 		}
 	}
 
-	private float evaluateReplace(Card newCard, int row, int column) {
+	protected float evaluateReplace(Card newCard, int row, int column) {
 		if (!hand.isCardRevealed(row, column)) {
 			return evaluateReplaceHidden(newCard, column);
 		} else {
@@ -186,6 +184,39 @@ abstract class AbstractPlayer implements Player {
 
 	protected Card getDiscard() {
 		return gv.getDiscardUpCard();
+	}
+
+	protected int cardsLeft = 9;
+	protected int cardsWeHaveLeft = 9;
+	protected int cardsBehind = 0;
+
+	protected void evaluateMovesPreCalculations() {
+		for (int player = 0; player < gv.getNumberOfPlayers(); player++) {
+
+			int movesLeftForPlayer = getHiddenCardsForPlayer(player);
+			if (movesLeftForPlayer < cardsLeft) {
+				cardsLeft = movesLeftForPlayer;
+			}
+			if (player == index) {
+				cardsWeHaveLeft = movesLeftForPlayer;
+			}
+		}
+		cardsBehind = cardsLeft - cardsWeHaveLeft;
+	}
+
+	private int getHiddenCardsForPlayer(int player) {
+		int count = 0;
+		for (int column = 0; column < Game.COLUMNS; column++) {
+			if (gv.isColumnCollapsed(player, column)) {
+				continue;
+			}
+			for (int row = 0; row < Game.ROWS; row++) {
+				if (gv.isCardRevealed(player, row, column)) {
+					count++;
+				}
+			}
+		}
+		return count;
 	}
 
 }

@@ -25,7 +25,12 @@ class Shoe {
     }
 
     /** Deal a card from the top of the deck */
-    Card draw() { return deck.remove(); }
+    Card draw() { 
+    	if(deck.size() == 0) {
+    		reset();
+    	}
+    	return deck.remove(); 
+    }
 
     /** Pick up top card on the discard pile */
     Card popDiscard() { return discard.removeLast(); }
