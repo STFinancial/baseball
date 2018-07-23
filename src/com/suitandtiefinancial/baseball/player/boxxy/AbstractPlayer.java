@@ -189,16 +189,34 @@ abstract class AbstractPlayer implements Player {
 	protected int cardsLeft = 9;
 	protected int cardsWeHaveLeft = 9;
 	protected int cardsBehind = 0;
+	protected int bestOtherScoreActual = 0;
+	protected int bestOtherScoreHiddenCards = 0;
+	protected int bestOtherScoreSimulated = 100000;
+	protected int ourActualTotal = 0;
 
 	protected void evaluateMovesPreCalculations() {
+		bestOtherScoreSimulated = 100000;
 		for (int player = 0; player < gv.getNumberOfPlayers(); player++) {
 
 			int movesLeftForPlayer = getHiddenCardsForPlayer(player);
 			if (movesLeftForPlayer < cardsLeft) {
 				cardsLeft = movesLeftForPlayer;
 			}
+			int score = gv.getRevealedTotal(player);
+			int scoreSimulated = score;
+			if (movesLeftForPlayer == 1) {
+				scoreSimulated += 3;
+			} else if (movesLeftForPlayer > 1) {
+				scoreSimulated += 3 * (movesLeftForPlayer - 1) * 5;
+			}
+
 			if (player == index) {
 				cardsWeHaveLeft = movesLeftForPlayer;
+				ourActualTotal = score;
+			} else if (scoreSimulated < bestOtherScoreSimulated) {
+				bestOtherScoreSimulated = scoreSimulated;
+				bestOtherScoreHiddenCards = movesLeftForPlayer;
+				bestOtherScoreActual = score;
 			}
 		}
 		cardsBehind = cardsLeft - cardsWeHaveLeft;

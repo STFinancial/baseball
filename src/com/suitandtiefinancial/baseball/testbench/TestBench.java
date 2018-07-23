@@ -36,6 +36,9 @@ public class TestBench {
             throw new IllegalStateException();
         }
         for (round = 0; round < numberOfSims; round++) {
+        	if(round % (numberOfSims/10) == 0) {
+        		System.out.print(".");
+        	}
             simulateSingleGame();
         }
     }
