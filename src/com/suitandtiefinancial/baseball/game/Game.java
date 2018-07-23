@@ -200,9 +200,6 @@ public class Game {
 			}
 			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
 			shoe.pushDiscard(toDiscard);
-//			if (toDiscard != null) {
-//				shoe.pushDiscard(toDiscard);
-//			}
 		}
 
 		currentPlayerIndex++;
