@@ -1,9 +1,6 @@
 package com.suitandtiefinancial.baseball.player;
 
-import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.GameView;
-import com.suitandtiefinancial.baseball.game.Move;
-import com.suitandtiefinancial.baseball.game.MoveType;
+import com.suitandtiefinancial.baseball.game.*;
 
 public class EVPlayer implements Player {
 	private GameView g;
@@ -112,6 +109,11 @@ public class EVPlayer implements Player {
 
 	@Override
 	public void showPeekedCard(int row, int column, Card c) {
+		// not used
+	}
+
+	@Override
+	public void processEvent(Event event) {
 		// not used
 	}
 }

@@ -15,8 +15,8 @@ class Shoe {
         discard = new LinkedList<>();
 
         for (int deckNum = 0; deckNum < numDecks; ++deckNum) {
-            for(Card c : Card.values()) {
-            	for(int count = 0; count < c.getQuantity(); count++) {
+            for (Card c : Card.values()) {
+            	for (int count = 0; count < c.getQuantity(); count++) {
             		deck.add(c);
             	}
             }
@@ -25,11 +25,12 @@ class Shoe {
     }
 
     /** Deal a card from the top of the deck */
-    Card draw() { 
-    	if(deck.size() == 0) {
-    		reset();
-    	}
+    Card draw() {
     	return deck.remove(); 
+    }
+
+    boolean isDeckEmpty() {
+        return deck.size() == 0;
     }
 
     /** Pick up top card on the discard pile */
@@ -46,6 +47,7 @@ class Shoe {
     	discard.addAll(card);
     }
 
+    /** Add the discard to the deck, and reshuffle */
     void reset() {
         deck.addAll(discard);
         discard.clear();

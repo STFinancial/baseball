@@ -1,6 +1,7 @@
 package com.suitandtiefinancial.baseball.player.trophycase;
 
 import com.suitandtiefinancial.baseball.game.*;
+
 import com.suitandtiefinancial.baseball.player.Player;
 
 /**
@@ -37,7 +38,15 @@ public class ContinuousEVPlayer implements Player {
     @Override
     public Move getMove() {
         // Check if the discard card is "better" than a draw card.
-        return null;
+
+        double downCardEv = computeUnknownEV();
+        if (g.getDiscardUpCard().getValue() < downCardEv) {
+            return discardMove();
+        } else if (findWorstSpot().getState() == SpotState.FACE_UP) {
+            return new Move(MoveType.DRAW);
+        } else {
+            return flipMove();
+        }
     }
 
     @Override
@@ -51,9 +60,14 @@ public class ContinuousEVPlayer implements Player {
         hand.setPeekedCard(c, row, column);
     }
 
-    private double computeUnknownEV() {
-        // TODO
+    @Override
+    public void processEvent(Event event) {
+        // TODO(stfinancial):
+    }
 
+    private double computeUnknownEV() {
+        // TODO(stfinancial): IMPORTANT! DOWN CARD EV DIVERGES FROM DECK EV ONCE DISCARD IS RESHUFFLED. Need to implement!
+        // TODO(stfinancial): How do we handle a discard pile that is reshuffled as the deck
         int numDecks = g.getNumDecks();
 
         // Calculate total before revealed cards
@@ -64,10 +78,68 @@ public class ContinuousEVPlayer implements Player {
             numCards += card.getQuantity();
         }
 
-        // Subtract revealed cards
+        // Subtract discarded cards
         for (Card discard : g.getDiscard()) {
-
+            --numCards;
+            total -= discard.getValue();
         }
-        return 0.0;
+
+        // Subtract visible cards
+        for (int p = 0; p < g.getNumberOfPlayers(); ++p) {
+            for (int row = 0; row < Game.ROWS; ++row) {
+                for (int column = 0; column < Game.COLUMNS; ++column) {
+                    if (g.isCardRevealed(p, row, column)) {
+                        --numCards;
+                        total -= g.viewCard(p, row, column).getValue();
+                    }
+                }
+            }
+        }
+
+        // TODO(stfinancial): Subtract our peeked cards.
+
+        return total / numCards;
+    }
+
+    private Move discardMove() {
+        // Find the worst card and remove it.
+        Hand.Spot s = findWorstSpot();
+        hand.setCard(g.getDiscardUpCard(), s.getRow(), s.getColumn());
+        return new Move(MoveType.REPLACE_WITH_DISCARD, s.getRow(), s.getColumn());
+    }
+
+    private Hand.Spot findWorstSpot() {
+        double unknownEV = computeUnknownEV();
+        double worstValue = Double.MIN_VALUE;
+        double currentValue;
+        Hand.Spot worstSpot = null;
+
+        for (Hand.Spot s: hand) {
+            if (s.getState() == SpotState.FACE_UP || s.getState() == SpotState.FACE_DOWN_PEEKED) {
+                currentValue = s.getCard().getValue();
+            } else if (s.getState() == SpotState.COLLAPSED) {
+                currentValue = Double.MIN_VALUE;
+            } else if (s.getState() == SpotState.FACE_DOWN) {
+                currentValue = unknownEV;
+            } else {
+                throw new IllegalStateException("Spot in unknown state: " + s.getState());
+            }
+            if (currentValue > worstValue) {
+                worstValue = currentValue;
+                worstSpot = s;
+            }
+        }
+        return worstSpot;
+    }
+
+    private Move flipMove() {
+        // Find the first unflipped card
+        for (Hand.Spot s: hand) {
+            if (s.getState() == SpotState.FACE_DOWN) {
+
+                return new Move(MoveType.FLIP, s.getRow(), s.getColumn());
+            }
+        }
+        throw new IllegalStateException("No cards left to flip.");
     }
 }

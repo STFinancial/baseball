@@ -1,8 +1,6 @@
 package com.suitandtiefinancial.baseball.game;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import com.suitandtiefinancial.baseball.game.Rules.StartStyle;
 import com.suitandtiefinancial.baseball.player.Player;
@@ -23,6 +21,8 @@ public class Game {
 	private final ArrayList<HandView> handViews;
 	private final ArrayList<Player> players;
 	private final GameView view;
+	// TODO(stfinancial): Maybe recreate an eventQueue in GameRecord?
+	private final Queue<Event> eventQueue;
 	public boolean DEBUG_PRINT = false;
 
 	private int currentPlayerIndex = 0;
@@ -34,6 +34,7 @@ public class Game {
 
 	public Game(int numberOfPlayers, int numberOfDecks, Rules rules) {
 		this.numberOfPlayers = numberOfPlayers;
+		eventQueue = new LinkedList<>();
 		shoe = new Shoe(numberOfDecks);
 		this.rules = rules;
 		hands = new ArrayList<Hand>(numberOfPlayers);
@@ -42,8 +43,12 @@ public class Game {
 		players = new ArrayList<Player>(numberOfPlayers);
 		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, handViews, shoe);
 
+		eventQueue.add(new Event(EventType.SHUFFLE));
 		dealHands();
+		eventQueue.add(new Event(EventType.INITIAL_DEAL));
 		shoe.pushDiscard(shoe.draw());
+		eventQueue.add(new Event(EventType.INITIAL_DISCARD, shoe.peekDiscard()));
+		processEventQueue();
 	}
 
 	private void createHandsAndHandViews() {
@@ -66,9 +71,8 @@ public class Game {
 		}
 	}
 
-	public int addPlayer(Player p) {
+	public void addPlayer(Player p) {
 		players.add(p);
-		return players.size() - 1;
 	}
 
 	public void tick() {
@@ -86,8 +90,10 @@ public class Game {
 		Move m = players.get(currentPlayerIndex).getOpener();
 		Hand h = hands.get(currentPlayerIndex);
 		if (m.getMoveType() == MoveType.FLIP) {
+			eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, m.getRow(), m.getColumn()));
 			h.flip(m.getRow(), m.getColumn());
 		} else if (m.getMoveType() == MoveType.PEEK && rules.getStartStyle() != StartStyle.FLIP) {
+			eventQueue.add(new Event(EventType.PEEK, currentPlayerIndex, m.getRow(), m.getColumn()));
 			Card peekedCard = h.peekCard(m.getRow(), m.getColumn());
 			players.get(currentPlayerIndex).showPeekedCard(m.getRow(), m.getColumn(), peekedCard);
 		} else {
@@ -110,19 +116,36 @@ public class Game {
 		List<Card> toDiscard = Collections.emptyList();
 		switch (m.getMoveType()) {
 		case DRAW:
+			if (shoe.isDeckEmpty()) {
+				shoe.reset();
+				eventQueue.add(new Event(EventType.SHUFFLE));
+			}
 			lastDrawnCard = shoe.draw();
+			eventQueue.add(new Event(EventType.DRAW, currentPlayerIndex));
 			break;
 		case FLIP:
 			toDiscard = hands.get(currentPlayerIndex).flip(m.getRow(), m.getColumn());
+			if (!toDiscard.isEmpty()) {
+				eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, toDiscard.get(0), m.getRow(), m.getColumn()));
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
+			} else {
+				eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, hands.get(currentPlayerIndex).peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn()));
+			}
 			break;
 		case REPLACE_WITH_DISCARD:
 			Card fromDiscard = shoe.popDiscard();
+			eventQueue.add(new Event(EventType.DRAW_DISCARD, currentPlayerIndex, fromDiscard));
 			Hand h = hands.get(currentPlayerIndex);
+			eventQueue.add(new Event(EventType.SET, currentPlayerIndex, fromDiscard, m.getRow(), m.getColumn()));
 			toDiscard = h.replace(fromDiscard, m.getRow(), m.getColumn());
+			if (toDiscard.size() > 1) {
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
+			}
 			break;
 		default:
 			throw new IllegalStateException("Illegal move " + m + " by player " + currentPlayerIndex);
 		}
+		toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
 		shoe.pushDiscard(toDiscard);
 		broadcastMove(m);
 		finishPlayerTurn();
@@ -133,10 +156,13 @@ public class Game {
 		switch (m.getMoveType()) {
 		case DECLINE_DRAWN_CARD:
 			shoe.pushDiscard(lastDrawnCard);
+			eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, lastDrawnCard));
 			break;
 		case REPLACE_WITH_DRAWN_CARD:
 			Hand h = hands.get(currentPlayerIndex);
+			eventQueue.add(new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn()));
 			List<Card> toDiscard = h.replace(lastDrawnCard, m.getRow(), m.getColumn());
+			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
 			shoe.pushDiscard(toDiscard);
 			break;
 		default:
@@ -157,10 +183,26 @@ public class Game {
 				playerWentOut = currentPlayerIndex;
 			}
 		} else {
+			// This is hacky and gross, figure a better way to see if something was collapsed in the reveal.
+			boolean col0, col1, col2;
+			col0 = hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED;
+			col1 = hands.get(currentPlayerIndex).getSpotState(0, 1) == SpotState.COLLAPSED;
+			col2 = hands.get(currentPlayerIndex).getSpotState(0, 2) == SpotState.COLLAPSED;
 			List<Card> toDiscard = hands.get(currentPlayerIndex).revealAll();
-			if (toDiscard != null) {
-				shoe.pushDiscard(toDiscard);
+			if (!col0 && hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED) {
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 0));
 			}
+			if (!col1 && hands.get(currentPlayerIndex).getSpotState(0, 1) == SpotState.COLLAPSED) {
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 1));
+			}
+			if (!col2 && hands.get(currentPlayerIndex).getSpotState(0, 2) == SpotState.COLLAPSED) {
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 2));
+			}
+			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
+			shoe.pushDiscard(toDiscard);
+//			if (toDiscard != null) {
+//				shoe.pushDiscard(toDiscard);
+//			}
 		}
 
 		currentPlayerIndex++;
@@ -171,6 +213,19 @@ public class Game {
 
 		if (currentPlayerIndex == playerWentOut) {
 			gameOver = true;
+			eventQueue.add(new Event(EventType.GAME_OVER));
+		}
+
+		processEventQueue();
+	}
+
+	private void processEventQueue() {
+		Event e;
+		while (!eventQueue.isEmpty()) {
+			e = eventQueue.remove();
+			for (Player p: players) {
+				p.processEvent(e);
+			}
 		}
 	}
 
