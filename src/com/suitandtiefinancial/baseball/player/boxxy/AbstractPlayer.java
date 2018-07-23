@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
 import com.suitandtiefinancial.baseball.game.Game;
 import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
@@ -15,10 +16,12 @@ import com.suitandtiefinancial.baseball.player.Player;
 
 abstract class AbstractPlayer implements Player {
 	protected final float cardEv;
-	protected Hand hand;
+	protected Hand myHand;
+	protected Hand fastestHand;
+	protected Hand bestHandBesidesMe;
+	protected List<Hand> hands;
 	private int index;
 	protected GameView gv;
-	protected Move lastMove;
 	protected Set<PossibleMove> possibleMoves;
 	Card drawnCard;
 
@@ -27,21 +30,37 @@ abstract class AbstractPlayer implements Player {
 		possibleMoves = new HashSet<PossibleMove>();
 	}
 
+	public void processEvent(Event event) {
+		switch (event.getType()) {
+		case COLLAPSE:
+			hands.get(event.getPlayerIndex()).collapseColumn(event.getColumn());
+			break;
+		case FLIP:
+		case SET:
+			hands.get(event.getPlayerIndex()).setCard(event.getCard(), event.getRow(), event.getColumn());
+			break;
+		default:
+			break;
+
+		}
+	}
+
 	public void initialize(GameView gv, int index) {
 		this.gv = gv;
 		this.index = index;
-		hand = new Hand(Game.ROWS, Game.COLUMNS);
-		lastMove = null;
+		hands = new ArrayList<Hand>();
+		for (int i = 0; i < gv.getNumberOfPlayers(); i++) {
+			hands.add(new Hand(Game.ROWS, Game.COLUMNS));
+		}
+		myHand = hands.get(index);
+		fastestHand = myHand;
 	}
 
 	public Move getOpener() {
-		updateHandFromLastMove();
-		if (hand.isCardRevealed(0, 0)) {
-			lastMove = new Move(MoveType.FLIP, 0, 1);
-			return lastMove;
+		if (myHand.isCardRevealed(0, 0)) {
+			return new Move(MoveType.FLIP, 0, 1);
 		} else {
-			lastMove = new Move(MoveType.FLIP, 0, 0);
-			return lastMove;
+			return new Move(MoveType.FLIP, 0, 0);
 		}
 	}
 
@@ -55,12 +74,10 @@ abstract class AbstractPlayer implements Player {
 
 	private Move getMoveInternal(Card c) {
 		drawnCard = c;
-		updateHandFromLastMove();
 		generateMoves(c);
 		evaluateMoves();
 		drawnCard = null;
-		lastMove = highestScoringMove();
-		return lastMove;
+		return highestScoringMove();
 	}
 
 	private void generateMoves(Card c) {
@@ -68,9 +85,9 @@ abstract class AbstractPlayer implements Player {
 		possibleMoves.clear();
 		if (c == null) {
 			possibleMoves.add(new PossibleMove(MoveType.DRAW));
-			for (column = 0; column < hand.getColumns(); column++) {
-				if (hand.getHiddenCardsInColumn(column) > 0) {
-					row = hand.getRowOfFirstHiddenCardInColumn(column);
+			for (column = 0; column < myHand.getColumns(); column++) {
+				if (myHand.getHiddenCardsInColumn(column) > 0) {
+					row = myHand.getRowOfFirstHiddenCardInColumn(column);
 					possibleMoves.add(new PossibleMove(MoveType.FLIP, row, column));
 				}
 			}
@@ -79,19 +96,19 @@ abstract class AbstractPlayer implements Player {
 		}
 
 		MoveType mt = (c == null ? MoveType.REPLACE_WITH_DISCARD : MoveType.REPLACE_WITH_DRAWN_CARD);
-		for (column = 0; column < hand.getColumns(); column++) {
-			if (hand.getHiddenCardsInColumn(column) > 0) {
-				row = hand.getRowOfFirstHiddenCardInColumn(column);
+		for (column = 0; column < myHand.getColumns(); column++) {
+			if (myHand.getHiddenCardsInColumn(column) > 0) {
+				row = myHand.getRowOfFirstHiddenCardInColumn(column);
 				possibleMoves.add(new PossibleMove(mt, row, column));
 			}
 		}
 
-		for (column = 0; column < hand.getColumns(); column++) {
-			if (hand.isColumnCollapsed(column)) {
+		for (column = 0; column < myHand.getColumns(); column++) {
+			if (myHand.isColumnCollapsed(column)) {
 				continue;
 			}
-			for (row = 0; row < hand.getRows(); row++) {
-				if (hand.isCardRevealed(row, column)) {
+			for (row = 0; row < myHand.getRows(); row++) {
+				if (myHand.isCardRevealed(row, column)) {
 					possibleMoves.add(new PossibleMove(mt, row, column));
 				}
 			}
@@ -125,10 +142,10 @@ abstract class AbstractPlayer implements Player {
 	}
 
 	protected float evaluateReplace(Card newCard, int row, int column) {
-		if (!hand.isCardRevealed(row, column)) {
+		if (!myHand.isCardRevealed(row, column)) {
 			return evaluateReplaceHidden(newCard, column);
 		} else {
-			return evaluateReplaceCard(newCard, hand.getCard(row, column), row, column);
+			return evaluateReplaceCard(newCard, myHand.getCard(row, column), row, column);
 		}
 	}
 
@@ -152,21 +169,6 @@ abstract class AbstractPlayer implements Player {
 		return best;
 	}
 
-	protected void updateHandFromLastMove() {
-		if (lastMove == null) {
-			return;
-		}
-		if (!lastMove.getMoveType().hasRowColumn()) {
-			return;
-		}
-		if (gv.isColumnCollapsed(index, lastMove.getColumn())) {
-			hand.collapseColumn(lastMove.getColumn());
-		} else {
-			hand.setCard(gv.viewCard(index, lastMove.getRow(), lastMove.getColumn()), lastMove.getRow(),
-					lastMove.getColumn());
-		}
-	}
-
 	private float calculateCardEv() {
 		int number = 0;
 		float total = 0;
@@ -186,55 +188,34 @@ abstract class AbstractPlayer implements Player {
 		return gv.getDiscardUpCard();
 	}
 
-	protected int cardsLeft = 9;
-	protected int cardsWeHaveLeft = 9;
-	protected int cardsBehind = 0;
-	protected int bestOtherScoreActual = 0;
-	protected int bestOtherScoreHiddenCards = 0;
-	protected int bestOtherScoreSimulated = 100000;
-	protected int ourActualTotal = 0;
-
 	protected void evaluateMovesPreCalculations() {
-		bestOtherScoreSimulated = 100000;
+		float bestOtherScoreSimulated = 100000;
 		for (int player = 0; player < gv.getNumberOfPlayers(); player++) {
+			Hand h = hands.get(player);
 
-			int movesLeftForPlayer = getHiddenCardsForPlayer(player);
-			if (movesLeftForPlayer < cardsLeft) {
-				cardsLeft = movesLeftForPlayer;
-			}
-			int score = gv.getRevealedTotal(player);
-			int scoreSimulated = score;
-			if (movesLeftForPlayer == 1) {
-				scoreSimulated += 3;
-			} else if (movesLeftForPlayer > 1) {
-				scoreSimulated += 3 * (movesLeftForPlayer - 1) * 5;
+			if (h.getNumberOfHiddenCards() < fastestHand.getNumberOfHiddenCards()) {
+				fastestHand = h;
 			}
 
 			if (player == index) {
-				cardsWeHaveLeft = movesLeftForPlayer;
-				ourActualTotal = score;
-			} else if (scoreSimulated < bestOtherScoreSimulated) {
-				bestOtherScoreSimulated = scoreSimulated;
-				bestOtherScoreHiddenCards = movesLeftForPlayer;
-				bestOtherScoreActual = score;
-			}
-		}
-		cardsBehind = cardsLeft - cardsWeHaveLeft;
-	}
-
-	private int getHiddenCardsForPlayer(int player) {
-		int count = 0;
-		for (int column = 0; column < Game.COLUMNS; column++) {
-			if (gv.isColumnCollapsed(player, column)) {
 				continue;
 			}
-			for (int row = 0; row < Game.ROWS; row++) {
-				if (gv.isCardRevealed(player, row, column)) {
-					count++;
-				}
+
+			float simulatedScore = evaluateHand(h);
+			if (simulatedScore < bestOtherScoreSimulated) {
+				bestHandBesidesMe = h;
+				bestOtherScoreSimulated = simulatedScore;
 			}
 		}
-		return count;
+	}
+
+	protected float evaluateHand(Hand h) {
+		float simulatedScore = h.getTotal();
+		if (h.getNumberOfHiddenCards() > 0) {
+			simulatedScore += 2 + (h.getNumberOfHiddenCards() - 1) * 6;
+		}
+		//TODO this doesnt consider collapse shits
+		return simulatedScore;
 	}
 
 }

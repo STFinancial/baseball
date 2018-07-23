@@ -9,7 +9,7 @@ import com.suitandtiefinancial.baseball.testbench.TestBench;
 public class Main {
 	public static void main(String[] args) {
 		
-		//doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
+		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
 		doMultipleSummaryOnly(100000, getFocusPlayer(), getBoxxyPlayers(5));
 		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
 

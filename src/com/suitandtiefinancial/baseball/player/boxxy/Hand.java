@@ -8,6 +8,7 @@ import com.suitandtiefinancial.baseball.game.Card;
 class Hand {
 	private final List<Column> columns;
 	private final int rows, cols;
+	private int total = 0, hiddenCards = 9;
 
 	public Hand(int rows, int cols) {
 		columns = new ArrayList<Column>(cols);
@@ -16,6 +17,14 @@ class Hand {
 		for (int column = 0; column < cols; column++) {
 			columns.add(new Column(rows));
 		}
+	}
+	
+	public int getTotal() {
+		return total;
+	}
+	
+	public int getNumberOfHiddenCards() {
+		return hiddenCards;
 	}
 
 	public boolean isColumnCollapsed(int column) {
@@ -31,10 +40,17 @@ class Hand {
 	}
 
 	public void setCard(Card c, int row, int column) {
+		total += c.getValue();
+		if(isCardRevealed(row, column)) {
+			total -= getCard(row, column).getValue();
+		}else {
+			hiddenCards--;
+		}
 		columns.get(column).getTile(row).set(c);
 	}
 
 	public void collapseColumn(int column) {
+		total -= 3 * getCard(0, column).getValue();
 		columns.get(column).collapse();
 	}
 
