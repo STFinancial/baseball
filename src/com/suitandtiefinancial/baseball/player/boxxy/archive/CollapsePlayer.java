@@ -3,6 +3,7 @@ package com.suitandtiefinancial.baseball.player.boxxy.archive;
 import java.awt.Point;
 
 import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 
@@ -43,6 +44,11 @@ public class CollapsePlayer extends AbstractPlayer {
 
 			return move(MoveType.DECLINE_DRAWN_CARD);
 		}
+	}
+
+	@Override
+	public void processEvent(Event event) {
+		// not used
 	}
 
 	private Move flipNext() {

@@ -1,6 +1,7 @@
 package com.suitandtiefinancial.baseball.player;
 
 import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
 import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 
@@ -15,4 +16,6 @@ public interface Player {
 	public Move getMoveWithDraw(Card c);
 	/** Called to show the player information about their peeked card. */
 	public void showPeekedCard(int row, int column, Card c);
+	/** Called to allow each player to update their information based on a {@link Event GameEvent} */
+	public void processEvent(Event event); // TODO(stfinancial): Maybe have this take in a list instead?
 }
