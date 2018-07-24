@@ -12,16 +12,18 @@ public class BoxxyPlayer extends AbstractPlayer {
 	private float probabilityToFinishColumn = 0;
 	private float evBonusForCollapse;
 	private float evBonusForReveal;
+	private final boolean basicGoOutCheck;
 
-	public BoxxyPlayer(float collapseBonus, float revealBonus) {
+	public BoxxyPlayer(float collapseBonus, float revealBonus, boolean basicGoOutCheck) {
 		evBonusForCollapse = collapseBonus;
 		this.evBonusForReveal = revealBonus;
+		this.basicGoOutCheck = basicGoOutCheck;
 	}
 
 	@Override
 	protected void evaluateMovesPreCalculations() {
 		super.evaluateMovesPreCalculations();
-		
+		int cardsLeft = super.fastestHand.getNumberOfHiddenCards();
 		if (cardsLeft == 0) {
 			probabilityToFinishColumn = .03f;
 		} else if (cardsLeft == 1) {
@@ -36,7 +38,7 @@ public class BoxxyPlayer extends AbstractPlayer {
 			probabilityToFinishColumn = .5f;
 		} else {
 			probabilityToFinishColumn = .6f;
-		} 
+		}
 	}
 
 	@Override
@@ -53,19 +55,19 @@ public class BoxxyPlayer extends AbstractPlayer {
 		MoveType mt = MoveType.REPLACE_WITH_DRAWN_CARD;
 		Set<PossibleMove> possible = new HashSet<PossibleMove>();
 		int column, row;
-		for (column = 0; column < hand.getColumns(); column++) {
-			if (hand.getHiddenCardsInColumn(column) > 0) {
-				row = hand.getRowOfFirstHiddenCardInColumn(column);
+		for (column = 0; column < myHand.getColumns(); column++) {
+			if (myHand.getHiddenCardsInColumn(column) > 0) {
+				row = myHand.getRowOfFirstHiddenCardInColumn(column);
 				possible.add(new PossibleMove(mt, row, column));
 			}
 		}
 
-		for (column = 0; column < hand.getColumns(); column++) {
-			if (hand.isColumnCollapsed(column)) {
+		for (column = 0; column < myHand.getColumns(); column++) {
+			if (myHand.isColumnCollapsed(column)) {
 				continue;
 			}
-			for (row = 0; row < hand.getRows(); row++) {
-				if (hand.isCardRevealed(row, column)) {
+			for (row = 0; row < myHand.getRows(); row++) {
+				if (myHand.isCardRevealed(row, column)) {
 					possible.add(new PossibleMove(mt, row, column));
 				}
 			}
@@ -89,14 +91,40 @@ public class BoxxyPlayer extends AbstractPlayer {
 	@Override
 	float evaluateReplaceHidden(Card newCard, int column) {
 		float additional = 0f;
-		
-		if (hand.getHiddenCardsInColumn(column) == 3) {
-			additional += evBonusForReveal * 2; 
-		}else if (hand.getHiddenCardsInColumn(column) == 2) {
+
+		if (myHand.getHiddenCardsInColumn(column) == 3) {
+			additional += evBonusForReveal * 2;
+		} else if (myHand.getHiddenCardsInColumn(column) == 2) {
 			additional += evBonusForReveal;
 		}
 
-		return evaluateReplaceInternal(newCard, cardEv, column) + additional;
+		if (myHand.getNumberOfHiddenCards() == 1 && basicGoOutCheck && super.fastestHand.getNumberOfHiddenCards() != 0) {
+			int scoreAfterFinal = getScoreAfterFinalMove(newCard);
+			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe) + 6) {
+				additional += -10000f;
+			}else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - 3){
+				additional += 10000f;
+			}
+		}
+
+		return evaluateReplaceInternal(newCard, cardEv,myHand.getRowOfFirstHiddenCardInColumn(column), column) + additional;
+	}
+
+	private int getScoreAfterFinalMove(Card finalCard) {
+		if (myHand.getNumberOfHiddenCards() != 1) {
+			throw new IllegalStateException();
+		}
+		int column;
+		for (column = 0; column < myHand.getColumns(); column++) {
+			if (myHand.getHiddenCardsInColumn(column) > 0) {
+				break;
+			}
+		}
+		if (myHand.getCountOfCardInColumn(column, finalCard) == 2) {
+			return super.myHand.getTotal() - finalCard.getValue() * 2;
+		} else {
+			return super.myHand.getTotal() + finalCard.getValue();
+		}
 	}
 
 	@Override
@@ -105,39 +133,64 @@ public class BoxxyPlayer extends AbstractPlayer {
 			return 0f;
 		}
 		float additional = 0f;
-		
-		if(hand.getCountOfCardInColumn(column, oldCard) == 2) {
+
+		if (myHand.getCountOfCardInColumn(column, oldCard) == 2) {
 			Card otherCard = getOtherCardInColumn(column, oldCard, oldCard);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional -= probabilityToFinishColumn * (oldCard.getValue() * 2 + otherCardValue + evBonusForCollapse);
+			additional -= probabilityToFinishColumn * (oldCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
 		}
-		
-		return evaluateReplaceInternal(newCard, oldCard.getValue(), column) + additional;
+
+		return evaluateReplaceInternal(newCard, oldCard.getValue(),row, column) + additional;
 	}
 
-	private float evaluateReplaceInternal(Card newCard, float oldCardEv, int column) {
-		if (hand.getCountOfCardInColumn(column, newCard) == 2) {
+	private float evaluateReplaceInternal(Card newCard, float oldCardEv, int row, int column) {
+		if (myHand.getCountOfCardInColumn(column, newCard) == 2) {
 			return newCard.getValue() * 2 + oldCardEv;
 		}
 		float additional = 0;
 
-		if (hand.getCountOfCardInColumn(column, newCard) == 1 && newCard != Card.JOKER) {
+		if (myHand.getCountOfCardInColumn(column, newCard) == 1 && newCard != Card.JOKER) {
 			Card otherCard = getOtherCardInColumn(column, newCard, null);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional += probabilityToFinishColumn * (newCard.getValue() * 2 + otherCardValue + evBonusForCollapse);
+			additional += probabilityToFinishColumn * (newCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
+		}
+		
+		if(otherTwoCardsPair(row, column)) {
+			additional -= myHand.getCard((row + 1) % myHand.getRows(), column).getValue();
 		}
 
 		return oldCardEv - newCard.getValue() + additional;
+	}
+
+	private boolean otherTwoCardsPair(int row, int column) {
+		Card c = null;
+		for(int r = 0; r < myHand.getRows(); r++) {
+			if(r == row) {
+				continue;
+			}
+			if(!myHand.isCardRevealed(r, column)) {
+				return false;
+			}
+			
+			if(c == null) {
+				c = myHand.getCard(r, column);
+			}else {
+				if(c != myHand.getCard(r, column)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private Card getOtherCardInColumn(int column, Card c1, Card c2) {
 		boolean c1Used = false, c2Used = false;
 		for (int row = 0; row < 3; row++) {
 			Card c;
-			if (!hand.isCardRevealed(row, column)) {
+			if (!myHand.isCardRevealed(row, column)) {
 				c = null;
 			} else {
-				c = hand.getCard(row, column);
+				c = myHand.getCard(row, column);
 			}
 			if (!c1Used && c == c1) {
 				c1Used = true;
@@ -148,10 +201,5 @@ public class BoxxyPlayer extends AbstractPlayer {
 			}
 		}
 		throw new IllegalStateException();
-	}
-
-	@Override
-	public void processEvent(Event event) {
-		// not used
 	}
 }

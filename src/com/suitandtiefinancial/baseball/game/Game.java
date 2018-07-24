@@ -90,7 +90,7 @@ public class Game {
 		Move m = players.get(currentPlayerIndex).getOpener();
 		Hand h = hands.get(currentPlayerIndex);
 		if (m.getMoveType() == MoveType.FLIP) {
-			eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, m.getRow(), m.getColumn()));
+			eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, h.peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn()));
 			h.flip(m.getRow(), m.getColumn());
 		} else if (m.getMoveType() == MoveType.PEEK && rules.getStartStyle() != StartStyle.FLIP) {
 			eventQueue.add(new Event(EventType.PEEK, currentPlayerIndex, m.getRow(), m.getColumn()));
@@ -99,7 +99,6 @@ public class Game {
 		} else {
 			throw new IllegalStateException("Illegal opening move of " + m + " by player " + currentPlayerIndex);
 		}
-		broadcastMove(m);
 		finishPlayerTurn();
 	}
 
@@ -147,7 +146,6 @@ public class Game {
 		}
 		toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
 		shoe.pushDiscard(toDiscard);
-		broadcastMove(m);
 		finishPlayerTurn();
 	}
 
@@ -162,6 +160,9 @@ public class Game {
 			Hand h = hands.get(currentPlayerIndex);
 			eventQueue.add(new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn()));
 			List<Card> toDiscard = h.replace(lastDrawnCard, m.getRow(), m.getColumn());
+			if (toDiscard.size() > 1) {
+				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
+			}
 			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
 			shoe.pushDiscard(toDiscard);
 			break;
@@ -170,7 +171,6 @@ public class Game {
 
 		}
 		lastDrawnCard = null;
-		broadcastMove(m);
 		finishPlayerTurn();
 	}
 
@@ -188,6 +188,23 @@ public class Game {
 			col0 = hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED;
 			col1 = hands.get(currentPlayerIndex).getSpotState(0, 1) == SpotState.COLLAPSED;
 			col2 = hands.get(currentPlayerIndex).getSpotState(0, 2) == SpotState.COLLAPSED;
+			
+			
+			//Adding to the shit stain, I want flip events for the reports;
+			for(int column = 0; column < COLUMNS; column++) {
+				if(hands.get(currentPlayerIndex).getSpotState(0, column)== SpotState.COLLAPSED) {
+					continue;
+				}
+				for(int row = 0; row < ROWS; row++) {
+					if(hands.get(currentPlayerIndex).getSpotState(row, column) != SpotState.FACE_UP) {
+						eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, hands.get(currentPlayerIndex).peekCard(row, column), row, column));
+					}
+				}
+			}
+			
+			
+			
+			
 			List<Card> toDiscard = hands.get(currentPlayerIndex).revealAll();
 			if (!col0 && hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED) {
 				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 0));
@@ -220,6 +237,9 @@ public class Game {
 		Event e;
 		while (!eventQueue.isEmpty()) {
 			e = eventQueue.remove();
+			if(this.DEBUG_PRINT) {
+				System.out.println(e);
+			}
 			for (Player p: players) {
 				p.processEvent(e);
 			}
@@ -240,22 +260,9 @@ public class Game {
 		System.out.println("Player " + winner + " wins with " + minimum);
 	}
 
-	private void broadcastMove(Move m) {
-		if (!DEBUG_PRINT) {
-			return;
-		}
-		String s = "Player " + currentPlayerIndex + " just " + m;
-		System.out.println(s);
-	}
-
 	@Override
 	public String toString() {
 		String s = "\n------------------------------------------------------------------------------------\n";
-		s += "Discard: " + shoe.peekDiscard() + "  Round: " + round + "  Current Player: " + currentPlayerIndex;
-		if (lastDrawnCard != null) {
-			s += " holding " + lastDrawnCard;
-		}
-		s += "\n\n";
 
 		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			s += "P" + playerIndex + "   ";
@@ -295,7 +302,7 @@ public class Game {
 		return winner;
 	}
 
-	int getRound() {
+	public int getRound() {
 		return round;
 	}
 

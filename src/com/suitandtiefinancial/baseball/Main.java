@@ -9,14 +9,14 @@ import com.suitandtiefinancial.baseball.testbench.TestBench;
 public class Main {
 	public static void main(String[] args) {
 		
-		//doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
-		doMultipleSummaryOnly(10000, getFocusPlayer(), getBoxxyPlayers(5));
-		doMultipleSummaryOnly(10000, getFocusPlayer(), getEvPlayers(5));
+		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
+		doMultipleSummaryOnly(100000, getFocusPlayer(), getBoxxyPlayers(5));
+		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
 
 	}
 
 	private static Player getFocusPlayer() {
-		return new RushPlayer();
+		return new BoxxyPlayer(60f, 2f, true);
 	}
 	
 	private static void doMultipleSummaryOnly(int numberOfGames, Player player, Player[] players) {
@@ -29,7 +29,7 @@ public class Main {
 		System.out.println("\n\nSimulating against " + numberOfPlayers + " BoxxyPlayers\n");
 		Player[] players = new Player[numberOfPlayers];
 		for(int index = 0; index < numberOfPlayers; index++) {
-			players[index] = new BoxxyPlayer(index * 100, index * 3);
+			players[index] = new BoxxyPlayer(1 + index * 12, index * 3, false);
 		}
 		return players;
 	}

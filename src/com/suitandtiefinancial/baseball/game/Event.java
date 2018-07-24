@@ -76,4 +76,22 @@ public class Event {
         }
         return column;
     }
+    
+    public String toString() {
+    	String s = "";
+    	if(playerIndex >= 0) {
+    		s += "Player " + playerIndex + " ";
+    	}
+    	s += type + " ";
+    	if(card != null) {
+    		s += "a " + card + " ";
+    	}
+    	if(row >= 0 && column >= 0) {
+    		s += "at " + row + "," + column + " ";
+    	}else if (column >= 0) {
+    		s += "at column " + column + " ";
+    	}
+    	
+    	return s;
+    }
 }
