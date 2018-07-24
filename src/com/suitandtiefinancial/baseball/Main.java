@@ -2,7 +2,6 @@ package com.suitandtiefinancial.baseball;
 
 import com.suitandtiefinancial.baseball.player.EVPlayer;
 import com.suitandtiefinancial.baseball.player.Player;
-import com.suitandtiefinancial.baseball.player.RushPlayer;
 import com.suitandtiefinancial.baseball.player.boxxy.BoxxyPlayer;
 import com.suitandtiefinancial.baseball.testbench.TestBench;
 
@@ -16,7 +15,7 @@ public class Main {
 	}
 
 	private static Player getFocusPlayer() {
-		return new BoxxyPlayer(60f, 2f, true);
+		return new BoxxyPlayer(3f, 6f, true);
 	}
 	
 	private static void doMultipleSummaryOnly(int numberOfGames, Player player, Player[] players) {
@@ -29,7 +28,7 @@ public class Main {
 		System.out.println("\n\nSimulating against " + numberOfPlayers + " BoxxyPlayers\n");
 		Player[] players = new Player[numberOfPlayers];
 		for(int index = 0; index < numberOfPlayers; index++) {
-			players[index] = new BoxxyPlayer(1 + index * 12, index * 3, false);
+			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, false);
 		}
 		return players;
 	}
