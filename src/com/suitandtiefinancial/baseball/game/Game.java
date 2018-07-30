@@ -27,7 +27,10 @@ public class Game {
 
 	private int currentPlayerIndex = 0;
 	private int round = 0;
+	// TODO(stfinancial): Deprecate this and use startOfTurnEvent
 	Card lastDrawnCard = null;
+	// TODO(stfinancial): clarify what this actually is.
+	private Event startOfTurnEvent = null;
 	private int playerWentOut = -1;
 
 	private boolean gameOver = false;
@@ -90,10 +93,13 @@ public class Game {
 		Move m = players.get(currentPlayerIndex).getOpener();
 		Hand h = hands.get(currentPlayerIndex);
 		if (m.getMoveType() == MoveType.FLIP) {
-			eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, h.peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn()));
-			h.flip(m.getRow(), m.getColumn());
+			Event flipEvent = new Event(EventType.FLIP, currentPlayerIndex, h.peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn());
+			eventQueue.add(flipEvent);
+			h.processEvent(flipEvent);
 		} else if (m.getMoveType() == MoveType.PEEK && rules.getStartStyle() != StartStyle.FLIP) {
-			eventQueue.add(new Event(EventType.PEEK, currentPlayerIndex, m.getRow(), m.getColumn()));
+			Event peekEvent = new Event(EventType.PEEK, currentPlayerIndex, m.getRow(), m.getColumn());
+			h.processEvent(peekEvent);
+			eventQueue.add(peekEvent);
 			Card peekedCard = h.peekCard(m.getRow(), m.getColumn());
 			players.get(currentPlayerIndex).showPeekedCard(m.getRow(), m.getColumn(), peekedCard);
 		} else {
@@ -112,7 +118,8 @@ public class Game {
 
 	private void tickStartOfTurn() {
 		Move m = players.get(currentPlayerIndex).getMove();
-		List<Card> toDiscard = Collections.emptyList();
+		List<Event> events;
+		Hand h;
 		switch (m.getMoveType()) {
 		case DRAW:
 			if (shoe.isDeckEmpty()) {
@@ -120,32 +127,32 @@ public class Game {
 				eventQueue.add(new Event(EventType.SHUFFLE));
 			}
 			lastDrawnCard = shoe.draw();
-			eventQueue.add(new Event(EventType.DRAW, currentPlayerIndex));
+			startOfTurnEvent = new Event(EventType.DRAW, currentPlayerIndex);
+			eventQueue.add(startOfTurnEvent);
 			break;
 		case FLIP:
-			toDiscard = hands.get(currentPlayerIndex).flip(m.getRow(), m.getColumn());
-			if (!toDiscard.isEmpty()) {
-				eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, toDiscard.get(0), m.getRow(), m.getColumn()));
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
-			} else {
-				eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, hands.get(currentPlayerIndex).peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn()));
-			}
+			h = hands.get(currentPlayerIndex);
+			startOfTurnEvent = new Event(EventType.FLIP, currentPlayerIndex, h.peekCard(m.getRow(), m.getColumn()), m.getRow(), m.getColumn());
+			eventQueue.add(startOfTurnEvent);
+			events = h.processEvent(startOfTurnEvent);
+			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});
+			eventQueue.addAll(events);
 			break;
 		case REPLACE_WITH_DISCARD:
+			h = hands.get(currentPlayerIndex);
 			Card fromDiscard = shoe.popDiscard();
-			eventQueue.add(new Event(EventType.DRAW_DISCARD, currentPlayerIndex, fromDiscard));
-			Hand h = hands.get(currentPlayerIndex);
-			eventQueue.add(new Event(EventType.SET, currentPlayerIndex, fromDiscard, m.getRow(), m.getColumn()));
-			toDiscard = h.replace(fromDiscard, m.getRow(), m.getColumn());
-			if (toDiscard.size() > 1) {
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
-			}
+			startOfTurnEvent = new Event(EventType.DRAW_DISCARD, currentPlayerIndex, fromDiscard);
+			eventQueue.add(startOfTurnEvent);
+
+			Event setEvent = new Event(EventType.SET, currentPlayerIndex, fromDiscard, m.getRow(), m.getColumn()).withTriggeringEvent(startOfTurnEvent);
+			eventQueue.add(setEvent);
+			events = h.processEvent(setEvent);
+			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});
+			eventQueue.addAll(events);
 			break;
 		default:
 			throw new IllegalStateException("Illegal move " + m + " by player " + currentPlayerIndex);
 		}
-		toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
-		shoe.pushDiscard(toDiscard);
 		finishPlayerTurn();
 	}
 
@@ -154,21 +161,17 @@ public class Game {
 		switch (m.getMoveType()) {
 		case DECLINE_DRAWN_CARD:
 			shoe.pushDiscard(lastDrawnCard);
-			eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, lastDrawnCard));
+			eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, lastDrawnCard).withTriggeringEvent(startOfTurnEvent));
 			break;
 		case REPLACE_WITH_DRAWN_CARD:
-			Hand h = hands.get(currentPlayerIndex);
-			eventQueue.add(new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn()));
-			List<Card> toDiscard = h.replace(lastDrawnCard, m.getRow(), m.getColumn());
-			if (toDiscard.size() > 1) {
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, m.getColumn()));
-			}
-			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
-			shoe.pushDiscard(toDiscard);
+			Event setEvent = new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn()).withTriggeringEvent(startOfTurnEvent);
+			eventQueue.add(setEvent);
+			List<Event> events = hands.get(currentPlayerIndex).processEvent(setEvent);
+			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});
+			eventQueue.addAll(events);
 			break;
 		default:
 			throw new IllegalStateException("Illegal move " + m + " by player " + currentPlayerIndex);
-
 		}
 		lastDrawnCard = null;
 		finishPlayerTurn();
@@ -183,40 +186,13 @@ public class Game {
 				playerWentOut = currentPlayerIndex;
 			}
 		} else {
-			// This is hacky and gross, figure a better way to see if something was collapsed in the reveal.
-			boolean col0, col1, col2;
-			col0 = hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED;
-			col1 = hands.get(currentPlayerIndex).getSpotState(0, 1) == SpotState.COLLAPSED;
-			col2 = hands.get(currentPlayerIndex).getSpotState(0, 2) == SpotState.COLLAPSED;
-			
-			
-			//Adding to the shit stain, I want flip events for the reports;
-			for(int column = 0; column < COLUMNS; column++) {
-				if(hands.get(currentPlayerIndex).getSpotState(0, column)== SpotState.COLLAPSED) {
-					continue;
-				}
-				for(int row = 0; row < ROWS; row++) {
-					if(hands.get(currentPlayerIndex).getSpotState(row, column) != SpotState.FACE_UP) {
-						eventQueue.add(new Event(EventType.FLIP, currentPlayerIndex, hands.get(currentPlayerIndex).peekCard(row, column), row, column));
-					}
-				}
-			}
-			
-			
-			
-			
-			List<Card> toDiscard = hands.get(currentPlayerIndex).revealAll();
-			if (!col0 && hands.get(currentPlayerIndex).getSpotState(0, 0) == SpotState.COLLAPSED) {
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 0));
-			}
-			if (!col1 && hands.get(currentPlayerIndex).getSpotState(0, 1) == SpotState.COLLAPSED) {
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 1));
-			}
-			if (!col2 && hands.get(currentPlayerIndex).getSpotState(0, 2) == SpotState.COLLAPSED) {
-				eventQueue.add(new Event(EventType.COLLAPSE, currentPlayerIndex, 2));
-			}
-			toDiscard.forEach(c -> eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, c)));
-			shoe.pushDiscard(toDiscard);
+//			hands.get(currentPlayerIndex).revealAll(currentPlayerIndex).forEach((e) -> {
+//				eventQueue.add(e);
+//				if (e.getType() == EventType.DISCARD) shoe.pushDiscard(e.getCard());
+//			});
+			List<Event> events = hands.get(currentPlayerIndex).revealAll(currentPlayerIndex);
+			eventQueue.addAll(events);
+			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});
 		}
 
 		currentPlayerIndex++;
