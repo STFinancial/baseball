@@ -9,9 +9,12 @@ public class Event {
     // TODO(stfinancial): This class is kind of a clusterfuck of constructors, maybe make subclasses?
     private final EventType type;
     private final Card card;
+    // TODO(stfinancial): Maybe remove this for events with triggers and just move up the tree to find it?
     private final int playerIndex;
     private final int row;
     private final int column;
+    // TODO(stfinancial): Maybe just include this as part of the constructors for the ones that will use this?
+    private Event triggeringEvent;
 
     Event(EventType type) {
         this(type, -1, null, -1, -1);
@@ -45,6 +48,8 @@ public class Event {
         this.column = column;
     }
 
+    Event withTriggeringEvent(Event event) { this.triggeringEvent = event; return this; }
+
     public EventType getType() {
         return type;
     }
@@ -75,6 +80,11 @@ public class Event {
             throw new IllegalStateException("This event does not correspond to a column: " + type);
         }
         return column;
+    }
+
+    /** Returns the Event that triggered this Event, if available. */
+    public Event getTriggeringEvent() {
+        return triggeringEvent;
     }
     
     public String toString() {

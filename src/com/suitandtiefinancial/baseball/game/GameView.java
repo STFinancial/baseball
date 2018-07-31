@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * Game information available for players.
  */
+@Deprecated
 public final class GameView {
     public static final int ROWS = 3;
     public static final int COLUMNS = 3;

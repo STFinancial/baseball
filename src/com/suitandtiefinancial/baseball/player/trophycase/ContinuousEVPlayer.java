@@ -62,7 +62,12 @@ public class ContinuousEVPlayer implements Player {
 
     @Override
     public void processEvent(Event event) {
-        // TODO(stfinancial):
+        switch (event.getType()) {
+            case SHUFFLE:
+
+                break;
+        }
+
     }
 
     private double computeUnknownEV() {
