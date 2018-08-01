@@ -2,12 +2,14 @@ package com.suitandtiefinancial.baseball.player.boxxy;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.suitandtiefinancial.baseball.game.Card;
 import com.suitandtiefinancial.baseball.game.Event;
+import com.suitandtiefinancial.baseball.game.EventType;
 import com.suitandtiefinancial.baseball.game.Game;
 import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
@@ -15,34 +17,103 @@ import com.suitandtiefinancial.baseball.game.MoveType;
 import com.suitandtiefinancial.baseball.player.Player;
 
 abstract class AbstractPlayer implements Player {
-	protected final float cardEv;
 	protected Hand myHand;
 	protected Hand fastestHand;
 	protected Hand bestHandBesidesMe;
 	protected List<Hand> hands;
 	private int index;
 	protected GameView gv;
-	protected Set<PossibleMove> possibleMoves;
+	protected Set<PossibleMove> possibleMoves= new HashSet<PossibleMove>();;
 	Card drawnCard;
+	private final EnumMap<Card, Integer> discard = new EnumMap<Card, Integer>(Card.class);
+	private final EnumMap<Card, Integer> inPlay = new EnumMap<Card, Integer>(Card.class);
+	private final EnumMap<Card, Integer> deck = new EnumMap<Card, Integer>(Card.class);
+	private final EnumMap<Card, Integer> faceDown = new EnumMap<Card, Integer>(Card.class);
+	private boolean shuffleHappened;
+	float cardEv;
 
-	public AbstractPlayer() {
-		cardEv = calculateCardEv();
-		possibleMoves = new HashSet<PossibleMove>();
-	}
-
+	@Override
 	public void processEvent(Event event) {
 		switch (event.getType()) {
-		case COLLAPSE:
-			hands.get(event.getPlayerIndex()).collapseColumn(event.getColumn());
-			break;
 		case FLIP:
-		case SET:
 			hands.get(event.getPlayerIndex()).setCard(event.getCard(), event.getRow(), event.getColumn());
+			moveCard(faceDown, inPlay, event.getCard());
+			break;
+		case DISCARD:
+			if (event.getTriggeringEvent().getType() == EventType.DRAW) {
+				processDrawThenDiscard(event);
+			} else if (event.getTriggeringEvent().getType() == EventType.COLLAPSE) {
+				processCollapseDiscard(event);
+			} else if (event.getTriggeringEvent().getType() == EventType.SET) {
+				processSet(event);
+			} else {
+				throw new IllegalStateException();
+			}
+			break;
+		case INITIAL_DISCARD:
+			moveCard(faceDown, discard, event.getCard());
+			break;
+		case SHUFFLE:
+			processShuffle();
 			break;
 		default:
 			break;
 
 		}
+	}
+
+	private void processDrawThenDiscard(Event event) {
+		if (shuffleHappened) {
+			moveCard(deck, discard, event.getCard());
+		} else {
+			moveCard(faceDown, discard, event.getCard());
+		}
+	}
+
+	private void processCollapseDiscard(Event event) {
+		moveCard(inPlay, discard, event.getCard());
+	}
+
+	private void processSet(Event discardEvent) {
+		Event setEvent = discardEvent.getTriggeringEvent();
+		Event drawEvent = setEvent.getTriggeringEvent();
+		EnumMap<Card, Integer> setCardSource, discardCardSource;
+		Hand h = hands.get(discardEvent.getPlayerIndex());
+		if (drawEvent.getType() == EventType.DRAW) {
+			if (shuffleHappened) {
+				setCardSource = deck;
+			} else {
+				setCardSource = faceDown;
+			}
+		} else if (drawEvent.getType() == EventType.DRAW_DISCARD) {
+			setCardSource = discard;
+		} else {
+			throw new IllegalStateException();
+		}
+		moveCard(setCardSource, inPlay, setEvent.getCard());
+
+		if (h.isCardRevealed(setEvent.getRow(), setEvent.getColumn())) {
+			discardCardSource = inPlay;
+		} else {
+			discardCardSource = faceDown;
+		}
+		moveCard(discardCardSource, discard, discardEvent.getCard());
+
+		h.setCard(setEvent.getCard(), setEvent.getRow(), setEvent.getColumn());
+	}
+
+	private void processShuffle() {
+		//Currently, shuffle happens after a draw attempt on an empty deck, the top discard is shuffled
+		shuffleHappened = true;
+		for (Card c : Card.values()) {
+			deck.put(c, discard.get(c));
+			discard.put(c, 0);
+		}
+	}
+
+	private void moveCard(EnumMap<Card, Integer> origin, EnumMap<Card, Integer> destination, Card c) {
+		origin.put(c, origin.get(c) - 1);
+		destination.put(c, destination.get(c) + 1);
 	}
 
 	public void initialize(GameView gv, int index) {
@@ -54,6 +125,24 @@ abstract class AbstractPlayer implements Player {
 		}
 		myHand = hands.get(index);
 		fastestHand = myHand;
+		for (Card c : Card.values()) {
+			faceDown.put(c, gv.getNumDecks() * c.getQuantity());
+			discard.put(c, 0);
+			inPlay.put(c, 0);
+			deck.put(c, 0);
+		}
+		shuffleHappened = false;
+
+	}
+
+	private float calculateCardEv() {
+		int number = 0;
+		float total = 0;
+		for (Card c : Card.values()) {
+			number += faceDown.get(c);
+			total += faceDown.get(c) * c.getValue();
+		}
+		return total / number;
 	}
 
 	public Move getOpener() {
@@ -166,17 +255,15 @@ abstract class AbstractPlayer implements Player {
 				best = pm.move;
 			}
 		}
-		return best;
-	}
-
-	private float calculateCardEv() {
-		int number = 0;
-		float total = 0;
-		for (Card c : Card.values()) {
-			number += c.getQuantity();
-			total += c.getQuantity() * c.getValue();
+		if(max < 0) {
+			for (PossibleMove pm : possibleMoves) {
+				System.out.println(pm.score + " " + pm.move);
+			}
+			DEBUG_PRINT();
+			System.out.println(shuffleHappened);
+			throw new IllegalStateException();
 		}
-		return total / number;
+		return best;
 	}
 
 	@Override
@@ -189,6 +276,7 @@ abstract class AbstractPlayer implements Player {
 	}
 
 	protected void evaluateMovesPreCalculations() {
+		cardEv = calculateCardEv();
 		float bestOtherScoreSimulated = 100000;
 		for (int player = 0; player < gv.getNumberOfPlayers(); player++) {
 			Hand h = hands.get(player);
@@ -212,10 +300,76 @@ abstract class AbstractPlayer implements Player {
 	protected float evaluateHand(Hand h) {
 		float simulatedScore = h.getTotal();
 		if (h.getNumberOfHiddenCards() > 0) {
-			simulatedScore += 2 + (h.getNumberOfHiddenCards() - 1) * 6;
+			simulatedScore += getEvFaceDown() * h.getNumberOfHiddenCards();
 		}
-		//TODO this doesnt consider collapse shits
 		return simulatedScore;
+	}
+	
+	protected float getEvFaceDown() {
+		float sum = 0, count = 0;
+		for(Card c : Card.values()) {
+			count += faceDown.get(c);
+			sum += faceDown.get(c) * c.getValue();
+		}
+		if(count == 0) {
+			return 0f;
+		}
+		return 1f * sum / count;
+	}
+	
+	protected float getEvDeck() {
+		float sum = 0, count = 0;
+		for(Card c : Card.values()) {
+			count += deck.get(c);
+			sum += deck.get(c) * c.getValue();
+		}
+		if(count == 0) {
+			return 0f;
+		}
+		return 1f * sum / count;
+	}
+
+	protected int getCardCountFaceDown(Card c) {
+		return faceDown.get(c);
+	}
+
+	protected int getCardCountDraw(Card c) {
+		if(gv.getNumberOfCardsLeftIndeck() == 0) {
+			return discard.get(c);
+		}else if (shuffleHappened) {
+			return deck.get(c);
+		} else {
+			return faceDown.get(c);
+		}
+	}
+
+	protected int getTotalCardCountFaceDown() {
+		int total = 0;
+		for(Card c : Card.values()) {
+			total += faceDown.get(c);
+		}
+		return total;
+	}
+	protected int getTotalCardCountDraw() {
+		int total = 0;
+		for(Card c : Card.values()) {
+			total += faceDown.get(c);
+		}
+		return total;
+	}
+	
+	private void DEBUG_PRINT() {
+		print(deck);
+		print(discard);
+		print(inPlay);
+		print(faceDown);
+	}
+
+	private void print(EnumMap<Card, Integer> map) {
+		for(Card c : Card.values()) {
+			System.out.print(map.get(c) + " ");
+		}
+		System.out.print("\n");
 	}
 
 }

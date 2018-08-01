@@ -51,5 +51,10 @@ public final class GameView {
     public Card getDiscardUpCard() {
         return shoe.peekDiscard();
     }
+    
+    public int getNumberOfCardsLeftIndeck() {
+    	return shoe.getDeckSize();
+    }
+    
     public List<Card> getDiscard() { return shoe.peekFullDiscard(); }
 }

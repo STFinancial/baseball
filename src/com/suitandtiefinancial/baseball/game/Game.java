@@ -45,13 +45,9 @@ public class Game {
 		createHandsAndHandViews();
 		players = new ArrayList<Player>(numberOfPlayers);
 		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, handViews, shoe);
-
-		eventQueue.add(new Event(EventType.SHUFFLE));
 		dealHands();
-		eventQueue.add(new Event(EventType.INITIAL_DEAL));
 		shoe.pushDiscard(shoe.draw());
 		eventQueue.add(new Event(EventType.INITIAL_DISCARD, shoe.peekDiscard()));
-		processEventQueue();
 	}
 
 	private void createHandsAndHandViews() {
@@ -76,6 +72,9 @@ public class Game {
 
 	public void addPlayer(Player p) {
 		players.add(p);
+		if (players.size() == numberOfPlayers) {
+			processEventQueue();
+		}
 	}
 
 	public void tick() {
@@ -83,6 +82,9 @@ public class Game {
 			tickOpener();
 		} else {
 			tickGame();
+		}
+		if(round > 2000) {
+			throw new IllegalStateException("Game has exceeded 2000 rounds");
 		}
 	}
 

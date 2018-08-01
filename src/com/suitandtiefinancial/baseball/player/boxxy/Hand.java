@@ -32,6 +32,9 @@ class Hand {
 	}
 
 	public boolean isCardRevealed(int row, int column) {
+		if(isColumnCollapsed(column)) {
+			throw new IllegalStateException();
+		}
 		return columns.get(column).getTile(row).isRevealed();
 	}
 
@@ -47,11 +50,10 @@ class Hand {
 			hiddenCards--;
 		}
 		columns.get(column).getTile(row).set(c);
-	}
-
-	public void collapseColumn(int column) {
-		total -= 3 * getCard(0, column).getValue();
-		columns.get(column).collapse();
+		if(columns.get(column).canCollapse()) {
+			total -= 3 * getCard(0, column).getValue();
+			columns.get(column).collapse();
+		}
 	}
 
 	public int getCountOfCardInColumn(int column, Card c) {
@@ -93,6 +95,24 @@ class Hand {
 			for (int row = 0; row < rows; row++) {
 				tiles.add(new Tile());
 			}
+		}
+
+		public boolean canCollapse() {
+			if(isCollapsed()) {
+				return false;
+			}
+			Card c = null;
+			for(Tile t : tiles) {
+				if(!t.isRevealed()) {
+					return false;
+				}
+				if(c == null) {
+					c = t.getCard();
+				}else if (c != t.getCard()) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public int getCountOfCard(Card c) {
