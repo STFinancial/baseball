@@ -28,7 +28,7 @@ public class Main {
 		System.out.println("\n\nSimulating against " + numberOfPlayers + " BoxxyPlayers\n");
 		Player[] players = new Player[numberOfPlayers];
 		for(int index = 0; index < numberOfPlayers; index++) {
-			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, true);
+			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, false);
 		}
 		return players;
 	}

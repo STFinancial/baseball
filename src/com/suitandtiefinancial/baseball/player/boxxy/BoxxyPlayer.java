@@ -98,7 +98,7 @@ public class BoxxyPlayer extends AbstractPlayer {
 			int scoreAfterFinal = getScoreAfterFinalMove(newCard);
 			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe)) {
 				additional += -10000f;
-			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe)){
+			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - 4){
 				additional += 10000f;
 			}
 		}
