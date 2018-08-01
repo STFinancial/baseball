@@ -53,4 +53,8 @@ class Shoe {
         discard.clear();
         Collections.shuffle(deck);
     }
+
+	public int getDeckSize() {
+		return deck.size();
+	}
 }

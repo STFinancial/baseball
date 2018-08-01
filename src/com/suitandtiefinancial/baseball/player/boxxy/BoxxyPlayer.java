@@ -9,46 +9,32 @@ import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class BoxxyPlayer extends AbstractPlayer {
 
-	private float probabilityToFinishColumn = 0;
 	private float evBonusForCollapse;
 	private float evBonusForReveal;
-	private final boolean basicGoOutCheck;
+	private boolean fuckFlipping;
 
-	public BoxxyPlayer(float collapseBonus, float revealBonus, boolean basicGoOutCheck) {
+	public BoxxyPlayer(float collapseBonus, float revealBonus, boolean fuckFlipping) {
 		evBonusForCollapse = collapseBonus;
 		this.evBonusForReveal = revealBonus;
-		this.basicGoOutCheck = basicGoOutCheck;
+		this.fuckFlipping = fuckFlipping;
 	}
 
 	@Override
 	protected void evaluateMovesPreCalculations() {
 		super.evaluateMovesPreCalculations();
-		int cardsLeft = super.fastestHand.getNumberOfHiddenCards();
-		if (cardsLeft == 0) {
-			probabilityToFinishColumn = .03f;
-		} else if (cardsLeft == 1) {
-			probabilityToFinishColumn = .1f;
-		} else if (cardsLeft == 2) {
-			probabilityToFinishColumn = .15f;
-		} else if (cardsLeft == 3) {
-			probabilityToFinishColumn = .3f;
-		} else if (cardsLeft == 4) {
-			probabilityToFinishColumn = .4f;
-		} else if (cardsLeft == 5) {
-			probabilityToFinishColumn = .5f;
-		} else {
-			probabilityToFinishColumn = .6f;
-		}
 	}
 
 	@Override
 	float evaluateDraw() {
-		float base = 0, sum = 0, divisor = 0;
+		float sum = 0, divisor = 0;
 		for (Card c : Card.values()) {
-			sum += evaluateDraw(c) * c.getQuantity();
-			divisor += c.getQuantity();
+			if(getCardCountDraw(c) == 0) {
+				continue;
+			}
+			sum += evaluateDraw(c) * getCardCountDraw(c);
+			divisor += getCardCountDraw(c);
 		}
-		return base + (sum / divisor);
+		return (sum / divisor);
 	}
 
 	private float evaluateDraw(Card c) {
@@ -85,7 +71,17 @@ public class BoxxyPlayer extends AbstractPlayer {
 
 	@Override
 	float evaluateFlip(int column) {
-		return -99999f; // Fuck flipping
+		if(fuckFlipping) {
+			return -999999;
+		}
+		float additional = 0, base = 0;
+		if (myHand.getHiddenCardsInColumn(column) == 3) {
+			additional += evBonusForReveal;
+		} else if (myHand.getHiddenCardsInColumn(column) == 2) {
+			additional += evBonusForReveal/2;
+		}
+		base = getEvFaceDown() - 7;
+		return additional + base;
 	}
 
 	@Override
@@ -98,11 +94,11 @@ public class BoxxyPlayer extends AbstractPlayer {
 			additional += evBonusForReveal;
 		}
 
-		if (myHand.getNumberOfHiddenCards() == 1 && basicGoOutCheck && super.fastestHand.getNumberOfHiddenCards() != 0) {
+		if (myHand.getNumberOfHiddenCards() == 1 && super.fastestHand.getNumberOfHiddenCards() != 0) {
 			int scoreAfterFinal = getScoreAfterFinalMove(newCard);
-			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe) + 6) {
+			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe)) {
 				additional += -10000f;
-			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - 3){
+			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe)){
 				additional += 10000f;
 			}
 		}
@@ -137,7 +133,7 @@ public class BoxxyPlayer extends AbstractPlayer {
 		if (myHand.getCountOfCardInColumn(column, oldCard) == 2) {
 			Card otherCard = getOtherCardInColumn(column, oldCard, oldCard);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional -= probabilityToFinishColumn * (oldCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
+			additional -= probabilityToGetOneMoreCard(oldCard, false, otherCard == null) * (oldCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
 		}
 
 		return evaluateReplaceInternal(newCard, oldCard.getValue(),row, column) + additional;
@@ -150,13 +146,16 @@ public class BoxxyPlayer extends AbstractPlayer {
 		float additional = 0;
 
 		if (myHand.getCountOfCardInColumn(column, newCard) == 1 && newCard != Card.JOKER) {
+			//We want to encourage placing a pair when getting a collapse is likely
 			Card otherCard = getOtherCardInColumn(column, newCard, null);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional += probabilityToFinishColumn * (newCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
+			additional += probabilityToGetOneMoreCard(newCard, true, otherCard == null) * (newCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
 		}
 		
-		if(otherTwoCardsPair(row, column)) {
-			additional -= myHand.getCard((row + 1) % myHand.getRows(), column).getValue();
+		if(otherTwoCardsPair(row, column)) { 
+			//We want to discourage placing a card in a probable collapse
+			Card otherCard = myHand.getCard((row + 1) % myHand.getRows(), column);
+			additional -= otherCard.getValue() * probabilityToGetOneMoreCard(otherCard, false, false);
 		}
 
 		return oldCardEv - newCard.getValue() + additional;
@@ -201,5 +200,25 @@ public class BoxxyPlayer extends AbstractPlayer {
 			}
 		}
 		throw new IllegalStateException();
+	}
+	
+
+	private float probabilityToGetOneMoreCard(Card c, boolean subtractOne, boolean hasTheFlip) {
+		int minimumTriesLeft = super.fastestHand.getNumberOfHiddenCards(); //TODO predict whether or not we will get extra turns or this player will rush out, for now we assume worst case
+		if(hasTheFlip) {
+			minimumTriesLeft++;
+		}
+		int downCardsLeft = super.getCardCountFaceDown(c);
+		int totalDownCards = super.getTotalCardCountFaceDown();
+		//TODO we don't properly check post shuffle, or predict if we will get a shuffle
+		if(subtractOne) {
+			downCardsLeft--;
+		}
+		float probabilityOfNotDrawing = 1f;
+		for(int attempt = 0; attempt < minimumTriesLeft; attempt++) {
+			probabilityOfNotDrawing *= (totalDownCards - attempt - downCardsLeft) / (totalDownCards - attempt);
+		}
+		//TODO cache some of this shit
+		return (1 - probabilityOfNotDrawing); 
 	}
 }
