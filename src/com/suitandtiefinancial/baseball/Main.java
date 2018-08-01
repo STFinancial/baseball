@@ -15,7 +15,7 @@ public class Main {
 	}
 
 	private static Player getFocusPlayer() {
-		return new BoxxyPlayer(1.5f, 3f, false);
+		return new BoxxyPlayer(1.5f, 3f, 4f);
 	}
 	
 	private static void doMultipleSummaryOnly(int numberOfGames, Player player, Player[] players) {
@@ -28,7 +28,7 @@ public class Main {
 		System.out.println("\n\nSimulating against " + numberOfPlayers + " BoxxyPlayers\n");
 		Player[] players = new Player[numberOfPlayers];
 		for(int index = 0; index < numberOfPlayers; index++) {
-			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, false);
+			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, index * 1);
 		}
 		return players;
 	}

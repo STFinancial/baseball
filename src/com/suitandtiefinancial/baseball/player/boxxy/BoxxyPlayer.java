@@ -11,12 +11,12 @@ public class BoxxyPlayer extends AbstractPlayer {
 
 	private float evBonusForCollapse;
 	private float evBonusForReveal;
-	private boolean fuckFlipping;
+	private float goOutBalls;
 
-	public BoxxyPlayer(float collapseBonus, float revealBonus, boolean fuckFlipping) {
+	public BoxxyPlayer(float collapseBonus, float revealBonus, float goOutBalls) {
 		evBonusForCollapse = collapseBonus;
 		this.evBonusForReveal = revealBonus;
-		this.fuckFlipping = fuckFlipping;
+		this.goOutBalls = goOutBalls;
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class BoxxyPlayer extends AbstractPlayer {
 	float evaluateDraw() {
 		float sum = 0, divisor = 0;
 		for (Card c : Card.values()) {
-			if(getCardCountDraw(c) == 0) {
+			if (getCardCountDraw(c) == 0) {
 				continue;
 			}
 			sum += evaluateDraw(c) * getCardCountDraw(c);
@@ -71,16 +71,21 @@ public class BoxxyPlayer extends AbstractPlayer {
 
 	@Override
 	float evaluateFlip(int column) {
-		if(fuckFlipping) {
-			return -999999;
-		}
 		float additional = 0, base = 0;
 		if (myHand.getHiddenCardsInColumn(column) == 3) {
 			additional += evBonusForReveal;
 		} else if (myHand.getHiddenCardsInColumn(column) == 2) {
-			additional += evBonusForReveal/2;
+			additional += evBonusForReveal / 2;
 		}
 		base = getEvFaceDown() - 7;
+		if (myHand.getNumberOfHiddenCards() == 1 && super.fastestHand.getNumberOfHiddenCards() != 0) {
+			int scoreAfterFinal = getScoreAfterFinalMove(null);
+			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe)) {
+				additional += -10000f;
+			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - goOutBalls) {
+				additional += 10000f;
+			}
+		}
 		return additional + base;
 	}
 
@@ -98,17 +103,21 @@ public class BoxxyPlayer extends AbstractPlayer {
 			int scoreAfterFinal = getScoreAfterFinalMove(newCard);
 			if (scoreAfterFinal >= super.evaluateHand(bestHandBesidesMe)) {
 				additional += -10000f;
-			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - 4){
+			} else if (scoreAfterFinal <= super.evaluateHand(bestHandBesidesMe) - goOutBalls) {
 				additional += 10000f;
 			}
 		}
 
-		return evaluateReplaceInternal(newCard, cardEv,myHand.getRowOfFirstHiddenCardInColumn(column), column) + additional;
+		return evaluateReplaceInternal(newCard, cardEv, myHand.getRowOfFirstHiddenCardInColumn(column), column)
+				+ additional;
 	}
 
 	private int getScoreAfterFinalMove(Card finalCard) {
 		if (myHand.getNumberOfHiddenCards() != 1) {
 			throw new IllegalStateException();
+		}
+		if (finalCard == null) {
+			return (int) (myHand.getTotal() + super.getEvFaceDown()) + 1;
 		}
 		int column;
 		for (column = 0; column < myHand.getColumns(); column++) {
@@ -133,10 +142,11 @@ public class BoxxyPlayer extends AbstractPlayer {
 		if (myHand.getCountOfCardInColumn(column, oldCard) == 2) {
 			Card otherCard = getOtherCardInColumn(column, oldCard, oldCard);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional -= probabilityToGetOneMoreCard(oldCard, false, otherCard == null) * (oldCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
+			additional -= probabilityToGetOneMoreCard(oldCard, false, otherCard == null)
+					* (oldCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
 		}
 
-		return evaluateReplaceInternal(newCard, oldCard.getValue(),row, column) + additional;
+		return evaluateReplaceInternal(newCard, oldCard.getValue(), row, column) + additional;
 	}
 
 	private float evaluateReplaceInternal(Card newCard, float oldCardEv, int row, int column) {
@@ -146,14 +156,15 @@ public class BoxxyPlayer extends AbstractPlayer {
 		float additional = 0;
 
 		if (myHand.getCountOfCardInColumn(column, newCard) == 1 && newCard != Card.JOKER) {
-			//We want to encourage placing a pair when getting a collapse is likely
+			// We want to encourage placing a pair when getting a collapse is likely
 			Card otherCard = getOtherCardInColumn(column, newCard, null);
 			float otherCardValue = (otherCard == null ? cardEv : otherCard.getValue());
-			additional += probabilityToGetOneMoreCard(newCard, true, otherCard == null) * (newCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
+			additional += probabilityToGetOneMoreCard(newCard, true, otherCard == null)
+					* (newCard.getValue() * 2 + otherCardValue) * evBonusForCollapse;
 		}
-		
-		if(otherTwoCardsPair(row, column)) { 
-			//We want to discourage placing a card in a probable collapse
+
+		if (otherTwoCardsPair(row, column)) {
+			// We want to discourage placing a card in a probable collapse
 			Card otherCard = myHand.getCard((row + 1) % myHand.getRows(), column);
 			additional -= otherCard.getValue() * probabilityToGetOneMoreCard(otherCard, false, false);
 		}
@@ -163,18 +174,18 @@ public class BoxxyPlayer extends AbstractPlayer {
 
 	private boolean otherTwoCardsPair(int row, int column) {
 		Card c = null;
-		for(int r = 0; r < myHand.getRows(); r++) {
-			if(r == row) {
+		for (int r = 0; r < myHand.getRows(); r++) {
+			if (r == row) {
 				continue;
 			}
-			if(!myHand.isCardRevealed(r, column)) {
+			if (!myHand.isCardRevealed(r, column)) {
 				return false;
 			}
-			
-			if(c == null) {
+
+			if (c == null) {
 				c = myHand.getCard(r, column);
-			}else {
-				if(c != myHand.getCard(r, column)) {
+			} else {
+				if (c != myHand.getCard(r, column)) {
 					return false;
 				}
 			}
@@ -201,24 +212,26 @@ public class BoxxyPlayer extends AbstractPlayer {
 		}
 		throw new IllegalStateException();
 	}
-	
 
 	private float probabilityToGetOneMoreCard(Card c, boolean subtractOne, boolean hasTheFlip) {
-		int minimumTriesLeft = super.fastestHand.getNumberOfHiddenCards(); //TODO predict whether or not we will get extra turns or this player will rush out, for now we assume worst case
-		if(hasTheFlip) {
+		int minimumTriesLeft = super.fastestHand.getNumberOfHiddenCards(); // TODO predict whether or not we will get
+																			// extra turns or this player will rush out,
+																			// for now we assume worst case
+		if (hasTheFlip) {
 			minimumTriesLeft++;
 		}
 		int downCardsLeft = super.getCardCountFaceDown(c);
 		int totalDownCards = super.getTotalCardCountFaceDown();
-		//TODO we don't properly check post shuffle, or predict if we will get a shuffle
-		if(subtractOne) {
+		// TODO we don't properly check post shuffle, or predict if we will get a
+		// shuffle
+		if (subtractOne) {
 			downCardsLeft--;
 		}
 		float probabilityOfNotDrawing = 1f;
-		for(int attempt = 0; attempt < minimumTriesLeft; attempt++) {
+		for (int attempt = 0; attempt < minimumTriesLeft; attempt++) {
 			probabilityOfNotDrawing *= (totalDownCards - attempt - downCardsLeft) / (totalDownCards - attempt);
 		}
-		//TODO cache some of this shit
-		return (1 - probabilityOfNotDrawing); 
+		// TODO cache some of this shit
+		return (1 - probabilityOfNotDrawing);
 	}
 }
