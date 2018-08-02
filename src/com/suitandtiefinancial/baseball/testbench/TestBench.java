@@ -36,7 +36,7 @@ public class TestBench {
 			throw new IllegalStateException();
 		}
 		for (round = 0; round < numberOfSims; round++) {
-			if (numberOfSims > 1000 && round % (numberOfSims / 10) == 0) {
+			if (numberOfSims > 99 && round % (numberOfSims / 10) == 0) {
 				System.out.print(".");
 			}
 			simulateSingleGame();
@@ -51,8 +51,8 @@ public class TestBench {
 
         for (int playerIndexInGame = 0; playerIndexInGame < numberOfPlayers; playerIndexInGame++) {
             int playerIndexInTestBench = (playerIndexInGame + firstPlayer) % numberOfPlayers;
-            g.addPlayer(players.get(playerIndexInTestBench));
             players.get(playerIndexInTestBench).initialize(g.getGameView(), playerIndexInGame);
+            g.addPlayer(players.get(playerIndexInTestBench));
             if (playerIndexInTestBench == 0) {
                 focusPlayerIndexInGame = playerIndexInGame;
             }

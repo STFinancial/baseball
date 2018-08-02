@@ -8,17 +8,28 @@ import com.suitandtiefinancial.baseball.testbench.TestBench;
 
 public class Main {
 	public static void main(String[] args) {
+//		while (true) {
+//			doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//
+//		}
+		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
 //		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+
+		doMultipleSummaryOnly(1000000, getFocusPlayer(), getEvPlayers(5));
+//		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
 //		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
-		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
-		doMultipleSummaryOnly(100000, getFocusPlayer(), getBoxxyPlayers(5));
-		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
+//		doMultipleSummaryOnly(10000, getFocusPlayer(), getBoxxyPlayers(5));
 
 	}
 
 	private static Player getFocusPlayer() {
 		return new ContinuousEVPlayer();
-//		return new BoxxyPlayer(60f, 2f, true);
+//		return new BoxxyPlayer(1.5f, 3f, 4f);
 	}
 	
 	private static void doMultipleSummaryOnly(int numberOfGames, Player player, Player[] players) {
@@ -31,7 +42,7 @@ public class Main {
 		System.out.println("\n\nSimulating against " + numberOfPlayers + " BoxxyPlayers\n");
 		Player[] players = new Player[numberOfPlayers];
 		for(int index = 0; index < numberOfPlayers; index++) {
-			players[index] = new BoxxyPlayer(1 + index * 12, index * 3, false);
+			players[index] = new BoxxyPlayer(1 + index * 1, index * 2, index * 2);
 		}
 		return players;
 	}

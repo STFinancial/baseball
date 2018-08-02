@@ -76,6 +76,9 @@ public class Game {
 
 	public void addPlayer(Player p) {
 		players.add(p);
+		if (players.size() == numberOfPlayers) {
+			processEventQueue();
+		}
 	}
 
 	public void tick() {
@@ -83,6 +86,9 @@ public class Game {
 			tickOpener();
 		} else {
 			tickGame();
+		}
+		if(round > 2000) {
+			throw new IllegalStateException("Game has exceeded 2000 rounds");
 		}
 	}
 
@@ -244,6 +250,7 @@ public class Game {
 		for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {
 			s += "P" + playerIndex + "   ";
 		}
+		s += "\t Discard: " + shoe.peekDiscard();
 		s += "\n";
 		for (int row = 0; row < Game.ROWS; row++) {
 			for (int playerIndex = 0; playerIndex < numberOfPlayers; playerIndex++) {

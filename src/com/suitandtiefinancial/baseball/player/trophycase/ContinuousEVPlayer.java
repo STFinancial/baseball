@@ -125,12 +125,12 @@ public class ContinuousEVPlayer implements Player {
                 worstSpot = s;
             }
         }
-        if (worstSpot == null) {
-            System.out.println("Worst Spot is null.");
-            System.out.println(g.toString());
-            System.out.println(hand.toString());
-            System.out.println(shoeInfo.toString());
-        }
+//        if (worstSpot == null) {
+//            System.out.println("Worst Spot is null.");
+//            System.out.println(g.toString());
+//            System.out.println(hand.toString());
+//            System.out.println(shoeInfo.toString());
+//        }
         return worstSpot;
     }
 

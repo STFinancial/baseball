@@ -20,6 +20,8 @@ class Hand implements Iterable<Hand.Spot> {
 
     // TODO(stfinancial): Associative array of playerIndex and Hand in the player class. Need to adjust FACE_DOWN_PEEKED logic then.
     Hand(int rows, int columns) {
+        this.rows = rows;
+        this.columns = columns;
         spots = new Spot[rows][columns];
         for (int row = 0; row < rows; ++row) {
             for (int column = 0; column < columns; ++column) {
@@ -92,12 +94,12 @@ class Hand implements Iterable<Hand.Spot> {
         }
     }
 
-    @Override
     /** Iterates over the hand spots by column then by row. That is, column is the inner loop and row is the outer loop */
+    @Override
     public Iterator<Spot> iterator() {
         return new Iterator<Spot>() {
-            int row = 0;
-            int column = 0;
+            private int row = 0;
+            private int column = 0;
 
             @Override
             public boolean hasNext() {

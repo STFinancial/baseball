@@ -147,6 +147,14 @@ public class Event {
     		s += "at column " + column + " ";
     	}
     	
+    	if(triggeringEvent != null) {
+    		s += "        from ";
+    		if(triggeringEvent.triggeringEvent != null) {
+    			s += triggeringEvent.triggeringEvent.getType() + "->";
+    		}
+    		s+= triggeringEvent.getType();
+    	}
+    	
     	return s;
     }
 }
