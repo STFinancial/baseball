@@ -1,11 +1,5 @@
 package com.suitandtiefinancial.baseball.player.boxxy;
 
-import java.awt.Point;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.suitandtiefinancial.baseball.game.Card;
 import com.suitandtiefinancial.baseball.game.Event;
 import com.suitandtiefinancial.baseball.game.Game;
@@ -13,6 +7,11 @@ import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 import com.suitandtiefinancial.baseball.player.Player;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 abstract class AbstractPlayer implements Player {
 	protected final float cardEv;

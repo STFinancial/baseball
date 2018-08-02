@@ -1,6 +1,10 @@
 package com.suitandtiefinancial.baseball.player;
 
-import com.suitandtiefinancial.baseball.game.*;
+import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
+import com.suitandtiefinancial.baseball.game.GameView;
+import com.suitandtiefinancial.baseball.game.Move;
+import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class EVPlayer implements Player {
 	private GameView g;

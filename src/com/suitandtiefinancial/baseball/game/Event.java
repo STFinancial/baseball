@@ -15,6 +15,8 @@ public class Event {
     private final int column;
     // TODO(stfinancial): Maybe just include this as part of the constructors for the ones that will use this?
     private Event triggeringEvent;
+    // The prior state of the spot in a SET event.
+    private SpotState priorState;
 
     Event(EventType type) {
         this(type, -1, null, -1, -1);
@@ -48,10 +50,23 @@ public class Event {
         this.column = column;
     }
 
+    Event(EventType type, int playerIndex, Card card, int row, int column, SpotState priorState) {
+        this.type = type;
+        this.playerIndex = playerIndex;
+        this.card = card;
+        this.row = row;
+        this.column = column;
+        this.priorState = priorState;
+    }
+
     Event withTriggeringEvent(Event event) { this.triggeringEvent = event; return this; }
 
     public EventType getType() {
         return type;
+    }
+
+    public boolean hasCard() {
+        return card != null;
     }
 
     public Card getCard() {
@@ -61,11 +76,19 @@ public class Event {
         return card;
     }
 
+    public boolean hasPlayerIndex() {
+        return playerIndex >= 0;
+    }
+
     public int getPlayerIndex() {
         if (playerIndex < 0) {
             throw new IllegalStateException("This event does not correspond to a particular player: " + type);
         }
         return playerIndex;
+    }
+
+    public boolean hasRow() {
+        return row >= 0;
     }
 
     public int getRow() {
@@ -75,6 +98,10 @@ public class Event {
         return row;
     }
 
+    public boolean hasColumn() {
+        return column >= 0;
+    }
+
     public int getColumn() {
         if (column < 0) {
             throw new IllegalStateException("This event does not correspond to a column: " + type);
@@ -82,8 +109,26 @@ public class Event {
         return column;
     }
 
+    public boolean hasPriorState() {
+        return type == EventType.SET;
+    }
+
+    public SpotState getPriorState() {
+        if (type != EventType.SET) {
+            throw new IllegalStateException("Prior State only valid for SET events: " + type);
+        }
+        return priorState;
+    }
+
+    public boolean hasTriggeringEvent() {
+        return triggeringEvent != null;
+    }
+
     /** Returns the Event that triggered this Event, if available. */
     public Event getTriggeringEvent() {
+        if (triggeringEvent == null) {
+            throw new IllegalStateException("This event type does not have a trigger: " + type);
+        }
         return triggeringEvent;
     }
     

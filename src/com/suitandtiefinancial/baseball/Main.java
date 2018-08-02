@@ -2,13 +2,14 @@ package com.suitandtiefinancial.baseball;
 
 import com.suitandtiefinancial.baseball.player.EVPlayer;
 import com.suitandtiefinancial.baseball.player.Player;
-import com.suitandtiefinancial.baseball.player.RushPlayer;
 import com.suitandtiefinancial.baseball.player.boxxy.BoxxyPlayer;
+import com.suitandtiefinancial.baseball.player.trophycase.ContinuousEVPlayer;
 import com.suitandtiefinancial.baseball.testbench.TestBench;
 
 public class Main {
 	public static void main(String[] args) {
-		
+//		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
+//		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
 		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
 		doMultipleSummaryOnly(100000, getFocusPlayer(), getBoxxyPlayers(5));
 		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
@@ -16,7 +17,8 @@ public class Main {
 	}
 
 	private static Player getFocusPlayer() {
-		return new BoxxyPlayer(60f, 2f, true);
+		return new ContinuousEVPlayer();
+//		return new BoxxyPlayer(60f, 2f, true);
 	}
 	
 	private static void doMultipleSummaryOnly(int numberOfGames, Player player, Player[] players) {

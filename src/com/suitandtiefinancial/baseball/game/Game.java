@@ -1,9 +1,12 @@
 package com.suitandtiefinancial.baseball.game;
 
-import java.util.*;
-
 import com.suitandtiefinancial.baseball.game.Rules.StartStyle;
 import com.suitandtiefinancial.baseball.player.Player;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * 
@@ -46,12 +49,9 @@ public class Game {
 		players = new ArrayList<Player>(numberOfPlayers);
 		view = new GameView(this, rules, numberOfDecks, numberOfPlayers, players, handViews, shoe);
 
-		eventQueue.add(new Event(EventType.SHUFFLE));
 		dealHands();
-		eventQueue.add(new Event(EventType.INITIAL_DEAL));
 		shoe.pushDiscard(shoe.draw());
 		eventQueue.add(new Event(EventType.INITIAL_DISCARD, shoe.peekDiscard()));
-		processEventQueue();
 	}
 
 	private void createHandsAndHandViews() {
@@ -124,6 +124,7 @@ public class Game {
 		case DRAW:
 			if (shoe.isDeckEmpty()) {
 				shoe.reset();
+				// TODO(stfinancial): Add a triggering event to shuffle?
 				eventQueue.add(new Event(EventType.SHUFFLE));
 			}
 			lastDrawnCard = shoe.draw();
@@ -144,7 +145,7 @@ public class Game {
 			startOfTurnEvent = new Event(EventType.DRAW_DISCARD, currentPlayerIndex, fromDiscard);
 			eventQueue.add(startOfTurnEvent);
 
-			Event setEvent = new Event(EventType.SET, currentPlayerIndex, fromDiscard, m.getRow(), m.getColumn()).withTriggeringEvent(startOfTurnEvent);
+			Event setEvent = new Event(EventType.SET, currentPlayerIndex, fromDiscard, m.getRow(), m.getColumn(), h.getSpotState(m.getRow(), m.getColumn())).withTriggeringEvent(startOfTurnEvent);
 			eventQueue.add(setEvent);
 			events = h.processEvent(setEvent);
 			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});
@@ -164,7 +165,7 @@ public class Game {
 			eventQueue.add(new Event(EventType.DISCARD, currentPlayerIndex, lastDrawnCard).withTriggeringEvent(startOfTurnEvent));
 			break;
 		case REPLACE_WITH_DRAWN_CARD:
-			Event setEvent = new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn()).withTriggeringEvent(startOfTurnEvent);
+			Event setEvent = new Event(EventType.SET, currentPlayerIndex, lastDrawnCard, m.getRow(), m.getColumn(), hands.get(currentPlayerIndex).getSpotState(m.getRow(), m.getColumn())).withTriggeringEvent(startOfTurnEvent);
 			eventQueue.add(setEvent);
 			List<Event> events = hands.get(currentPlayerIndex).processEvent(setEvent);
 			events.forEach(e -> { if (e.getType() == EventType.DISCARD) { shoe.pushDiscard(e.getCard()); }});

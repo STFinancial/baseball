@@ -1,10 +1,11 @@
 package com.suitandtiefinancial.baseball.game;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by Timothy on 7/6/18.
+ * The shoe of {@link Card Cards} including the deck and the discard pile.
  */
 class Shoe {
     private LinkedList<Card> deck;
@@ -25,9 +26,7 @@ class Shoe {
     }
 
     /** Deal a card from the top of the deck */
-    Card draw() {
-    	return deck.remove(); 
-    }
+    Card draw() { return deck.remove(); }
 
     boolean isDeckEmpty() {
         return deck.size() == 0;
@@ -43,9 +42,6 @@ class Shoe {
 
     /** Discard provided card */
     void pushDiscard(Card card) { discard.add(card); }
-    void pushDiscard(List<Card> card) {
-    	discard.addAll(card);
-    }
 
     /** Add the discard to the deck, and reshuffle */
     void reset() {

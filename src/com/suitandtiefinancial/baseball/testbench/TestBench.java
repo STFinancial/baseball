@@ -1,12 +1,12 @@
 package com.suitandtiefinancial.baseball.testbench;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.suitandtiefinancial.baseball.game.Game;
 import com.suitandtiefinancial.baseball.game.GameRecord;
 import com.suitandtiefinancial.baseball.game.Rules;
 import com.suitandtiefinancial.baseball.player.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestBench {
 	private final int numberOfSims;

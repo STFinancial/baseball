@@ -1,6 +1,5 @@
 package com.suitandtiefinancial.baseball.player.boxxy;
 
-import com.suitandtiefinancial.baseball.game.Card;
 import com.suitandtiefinancial.baseball.game.Move;
 import com.suitandtiefinancial.baseball.game.MoveType;
 

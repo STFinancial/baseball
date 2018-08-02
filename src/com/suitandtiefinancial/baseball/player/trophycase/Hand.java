@@ -1,12 +1,14 @@
 package com.suitandtiefinancial.baseball.player.trophycase;
 
 import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
 import com.suitandtiefinancial.baseball.game.Game;
 import com.suitandtiefinancial.baseball.game.SpotState;
 
 import java.util.Iterator;
 
 // TODO(stfinancial): I think this is only our representation about our own hand.
+// TODO(stfinancial): If we want to construct representations of public hands, then this class needs to change a bit.
 
 /**
  * Player internal representation of the player's knowledge about a hand.
@@ -16,6 +18,7 @@ class Hand implements Iterable<Hand.Spot> {
     private int rows;
     private int columns;
 
+    // TODO(stfinancial): Associative array of playerIndex and Hand in the player class. Need to adjust FACE_DOWN_PEEKED logic then.
     Hand(int rows, int columns) {
         spots = new Spot[rows][columns];
         for (int row = 0; row < rows; ++row) {
@@ -33,9 +36,29 @@ class Hand implements Iterable<Hand.Spot> {
         }
     }
 
+    void processEvent(Event event) {
+        switch (event.getType()) {
+            case SET:
+                setCard(event.getCard(), event.getRow(), event.getColumn());
+                break;
+            case FLIP:
+                setCard(event.getCard(), event.getRow(), event.getColumn());
+                break;
+            case COLLAPSE:
+                collapseColumn(event.getColumn());
+                break;
+            case PEEK:
+                // TODO(stfinancial): Implement this.
+                break;
+            default:
+                // Ignore.
+        }
+    }
+
     /** Mark a face-down card as peeked, set a card value if we peeked at our own card */
     void setPeekedCard(Card c, int row, int column) {
         // TODO(stfinancial): Allow setting null values for cards to represent other players' peeks
+        // TODO(stfinancial): We assume that we know the value of FACE_DOWN_PEEKED, so we would need something else.
         spots[row][column].card = c;
         spots[row][column].state = SpotState.FACE_DOWN_PEEKED;
     }
@@ -83,14 +106,42 @@ class Hand implements Iterable<Hand.Spot> {
 
             @Override
             public Spot next() {
-                Spot s = spots[row][column++];
-                if (column < Game.COLUMNS) {
+                Spot s = spots[row][column];
+                column++;
+                if (column == Game.COLUMNS) {
                     column = 0;
                     ++row;
                 }
                 return s;
             }
         };
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int row = 0; row < Game.ROWS; ++row) {
+            for (int col = 0; col < Game.COLUMNS; ++col) {
+                sb.append(row + ", " + col + ": ");
+                switch (spots[row][col].getState()) {
+                    case FACE_UP:
+                        sb.append(spots[row][col].card.getValue() + " - FACE_UP\n");
+                        break;
+                    case COLLAPSED:
+                        sb.append("X - COLLAPSED\n");
+                        break;
+                    case FACE_DOWN:
+                        sb.append("? - FACE_DOWN\n");
+                        break;
+                    case FACE_DOWN_PEEKED:
+                        sb.append(spots[row][col].card.getValue() + " - FACE_DOWN_PEEKED\n");
+                        break;
+                    default:
+                        throw new IllegalStateException("Spot in Illegal State: " + spots[row][col].getState());
+                }
+            }
+        }
+        return sb.toString();
     }
 
     class Spot {

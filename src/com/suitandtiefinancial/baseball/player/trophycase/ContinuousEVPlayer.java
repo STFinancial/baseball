@@ -1,19 +1,26 @@
 package com.suitandtiefinancial.baseball.player.trophycase;
 
-import com.suitandtiefinancial.baseball.game.*;
-
+import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.Event;
+import com.suitandtiefinancial.baseball.game.Game;
+import com.suitandtiefinancial.baseball.game.GameView;
+import com.suitandtiefinancial.baseball.game.Move;
+import com.suitandtiefinancial.baseball.game.MoveType;
+import com.suitandtiefinancial.baseball.game.SpotState;
 import com.suitandtiefinancial.baseball.player.Player;
 
 /**
  * Created by Timothy on 7/14/18.
  */
 public class ContinuousEVPlayer implements Player {
-    GameView g;
-    Hand hand;
-    boolean firstOpener;
-    int playerIndex;
+    private GameView g;
+    private Hand hand;
+    private boolean firstOpener;
+    private int playerIndex;
 
-    ContinuousEVPlayer() {
+    private ShoeInfo shoeInfo;
+
+    public ContinuousEVPlayer() {
         hand = new Hand(Game.ROWS, Game.COLUMNS);
     }
 
@@ -23,6 +30,7 @@ public class ContinuousEVPlayer implements Player {
         this.playerIndex = index;
         hand.clear();
         firstOpener = true;
+        shoeInfo = new ShoeInfo(g.getNumDecks(), g);
     }
 
     @Override
@@ -38,11 +46,9 @@ public class ContinuousEVPlayer implements Player {
     @Override
     public Move getMove() {
         // Check if the discard card is "better" than a draw card.
-
-        double downCardEv = computeUnknownEV();
-        if (g.getDiscardUpCard().getValue() < downCardEv) {
+        if (g.getDiscardUpCard().getValue() < shoeInfo.getDrawEv()) {
             return discardMove();
-        } else if (findWorstSpot().getState() == SpotState.FACE_UP) {
+        } else if (findWorstSpot().getState() == SpotState.FACE_UP || findWorstSpot().getState() == SpotState.FACE_DOWN_PEEKED) {
             return new Move(MoveType.DRAW);
         } else {
             return flipMove();
@@ -51,7 +57,20 @@ public class ContinuousEVPlayer implements Player {
 
     @Override
     public Move getMoveWithDraw(Card c) {
-        return null;
+        Hand.Spot s = findWorstSpot();
+        double worstValue;
+        if (s.getState() == SpotState.FACE_UP || s.getState() == SpotState.FACE_DOWN_PEEKED) {
+            worstValue = s.getCard().getValue();
+        } else if (s.getState() == SpotState.FACE_DOWN) {
+            worstValue = shoeInfo.getDownCardEv();
+        } else {
+            throw new IllegalStateException("Worst spot should not be collapsed.");
+        }
+        if (c.getValue() < worstValue) {
+            return new Move(MoveType.REPLACE_WITH_DRAWN_CARD, s.getRow(), s.getColumn());
+        } else {
+            return new Move(MoveType.DECLINE_DRAWN_CARD);
+        }
     }
 
     @Override
@@ -62,59 +81,31 @@ public class ContinuousEVPlayer implements Player {
 
     @Override
     public void processEvent(Event event) {
-        switch (event.getType()) {
-            case SHUFFLE:
-
-                break;
+        shoeInfo.processEvent(event);
+        if (event.hasPlayerIndex() && event.getPlayerIndex() == playerIndex) {
+            hand.processEvent(event);
         }
+//        switch (event.getType()) {
+//            case SHUFFLE:
+//
+//                break;
+//        }
 
-    }
-
-    private double computeUnknownEV() {
-        // TODO(stfinancial): IMPORTANT! DOWN CARD EV DIVERGES FROM DECK EV ONCE DISCARD IS RESHUFFLED. Need to implement!
-        // TODO(stfinancial): How do we handle a discard pile that is reshuffled as the deck
-        int numDecks = g.getNumDecks();
-
-        // Calculate total before revealed cards
-        double total = 0;
-        int numCards = 0;
-        for (Card card : Card.values()) {
-            total += card.getValue() * card.getQuantity();
-            numCards += card.getQuantity();
-        }
-
-        // Subtract discarded cards
-        for (Card discard : g.getDiscard()) {
-            --numCards;
-            total -= discard.getValue();
-        }
-
-        // Subtract visible cards
-        for (int p = 0; p < g.getNumberOfPlayers(); ++p) {
-            for (int row = 0; row < Game.ROWS; ++row) {
-                for (int column = 0; column < Game.COLUMNS; ++column) {
-                    if (g.isCardRevealed(p, row, column)) {
-                        --numCards;
-                        total -= g.viewCard(p, row, column).getValue();
-                    }
-                }
-            }
-        }
-
-        // TODO(stfinancial): Subtract our peeked cards.
-
-        return total / numCards;
     }
 
     private Move discardMove() {
         // Find the worst card and remove it.
         Hand.Spot s = findWorstSpot();
-        hand.setCard(g.getDiscardUpCard(), s.getRow(), s.getColumn());
+//        if (s == null) {
+//            System.out.println("Discard Move is null.");
+//            System.out.println(hand.toString());
+//        }
+//        hand.setCard(g.getDiscardUpCard(), s.getRow(), s.getColumn());
         return new Move(MoveType.REPLACE_WITH_DISCARD, s.getRow(), s.getColumn());
     }
 
     private Hand.Spot findWorstSpot() {
-        double unknownEV = computeUnknownEV();
+        double unknownEV = shoeInfo.getDownCardEv();
         double worstValue = Double.MIN_VALUE;
         double currentValue;
         Hand.Spot worstSpot = null;
@@ -133,6 +124,12 @@ public class ContinuousEVPlayer implements Player {
                 worstValue = currentValue;
                 worstSpot = s;
             }
+        }
+        if (worstSpot == null) {
+            System.out.println("Worst Spot is null.");
+            System.out.println(g.toString());
+            System.out.println(hand.toString());
+            System.out.println(shoeInfo.toString());
         }
         return worstSpot;
     }

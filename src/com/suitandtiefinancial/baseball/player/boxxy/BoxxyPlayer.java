@@ -1,11 +1,10 @@
 package com.suitandtiefinancial.baseball.player.boxxy;
 
+import com.suitandtiefinancial.baseball.game.Card;
+import com.suitandtiefinancial.baseball.game.MoveType;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import com.suitandtiefinancial.baseball.game.Card;
-import com.suitandtiefinancial.baseball.game.Event;
-import com.suitandtiefinancial.baseball.game.MoveType;
 
 public class BoxxyPlayer extends AbstractPlayer {
 

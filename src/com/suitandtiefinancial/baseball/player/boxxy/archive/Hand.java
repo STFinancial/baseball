@@ -1,9 +1,9 @@
 package com.suitandtiefinancial.baseball.player.boxxy.archive;
 
+import com.suitandtiefinancial.baseball.game.Card;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.suitandtiefinancial.baseball.game.Card;
 
 class Hand {
 	private final List<Column> columns;

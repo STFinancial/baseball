@@ -52,4 +52,9 @@ public final class GameView {
         return shoe.peekDiscard();
     }
     public List<Card> getDiscard() { return shoe.peekFullDiscard(); }
+
+    @Override
+    public String toString() {
+        return game.toString();
+    }
 }
