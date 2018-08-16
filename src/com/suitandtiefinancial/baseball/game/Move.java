@@ -36,7 +36,7 @@ public class Move {
 	@Override
 	public String toString() {
 		if(moveType.hasRowColumn()) {
-			return moveType + " at ( " + row +", " + column + ")";
+			return moveType + " at (" + row + ", " + column + ")";
 		}else {
 			return moveType.toString();
 		}

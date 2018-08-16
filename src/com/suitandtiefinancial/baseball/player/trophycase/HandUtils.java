@@ -9,7 +9,7 @@ import com.suitandtiefinancial.baseball.game.SpotState;
  */
 class HandUtils {
 
-    boolean canCollapseWithCard(Hand hand, Card card, int column) {
+    static boolean canCollapseWithCard(Hand hand, Card card, int column) {
         int columnCardCount = 0;
         for (int row = 0; row < Game.ROWS; ++row) {
             switch (hand.getSpotState(row, column)) {
@@ -18,7 +18,8 @@ class HandUtils {
                 case FACE_DOWN:
                     break;
                 case FACE_DOWN_PEEKED:
-                    if (hand.viewCard(row, column) == card) ++columnCardCount;
+                    // TODO(stfinancial): Figure out how to handle this!!!! IMPORTANT
+//                    if (hand.viewCard(row, column) == card) ++columnCardCount;
                     break;
                 case FACE_UP:
                     if (hand.viewCard(row, column) == card) ++columnCardCount;
@@ -28,5 +29,15 @@ class HandUtils {
             }
         }
         return columnCardCount == 2;
+    }
+
+    static int getFaceUpCardCountForColumn(Hand hand, Card card, int column) {
+        int columnCardCount = 0;
+        for (int row = 0; row < Game.ROWS; ++row) {
+            if (hand.getSpotState(row, column) == SpotState.FACE_UP && hand.viewCard(row, column) == card) {
+                ++columnCardCount;
+            }
+        }
+        return columnCardCount;
     }
 }

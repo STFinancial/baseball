@@ -7,15 +7,19 @@ import com.suitandtiefinancial.baseball.game.Game;
 import com.suitandtiefinancial.baseball.game.GameView;
 import com.suitandtiefinancial.baseball.game.SpotState;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Created by Timothy on 7/24/18.
  */
 class ShoeInfo {
     // <Card, <Card State, #Cards in state>>
-    private EnumMap<Card, EnumMap<CardState, Integer>> shoeState;
+//    private EnumMap<Card, EnumMap<CardState, Integer>> f;
+    // <Card State, <Card, #Cards in state>>
+    private EnumMap<CardState, EnumMap<Card, Integer>> shoeState;
     private LinkedList<Card> discard;
     private GameView gameView;
 
@@ -41,11 +45,19 @@ class ShoeInfo {
     ShoeInfo(int numDecks, GameView gameView) {
         this.numDecks = numDecks;
         this.gameView = gameView;
-        this.shoeState = new EnumMap<>(Card.class);
+//        this.shoeState = new EnumMap<>(Card.class);
+        this.shoeState = new EnumMap<>(CardState.class);
         int tempCards = 0;
         int tempValue = 0;
+//        for (Card c: Card.values()) {
+//            shoeState.put(c, new EnumMap<>(CardState.class));
+//            tempCards += c.getQuantity();
+//            tempValue += c.getValue() * c.getQuantity();
+//        }
+        for (CardState s: CardState.values()) {
+            shoeState.put(s, new EnumMap<>(Card.class));
+        }
         for (Card c: Card.values()) {
-            shoeState.put(c, new EnumMap<>(CardState.class));
             tempCards += c.getQuantity();
             tempValue += c.getValue() * c.getQuantity();
         }
@@ -62,12 +74,21 @@ class ShoeInfo {
         unrevealedCards = totalCards;
         unrevealedTotal = totalValue;
         // Set all states to unrevealed.
-        shoeState.forEach((card, states) -> {
-            for (CardState state: CardState.values()) {
+//        shoeState.forEach((card, states) -> {
+//            for (CardState state: CardState.values()) {
+//                if (state == CardState.UNREVEALED) {
+//                    states.put(state, card.getQuantity() * numDecks);
+//                } else {
+//                    states.put(state, 0);
+//                }
+//            }
+//        });
+        shoeState.forEach((state, cards) -> {
+            for (Card c: Card.values()) {
                 if (state == CardState.UNREVEALED) {
-                    states.put(state, card.getQuantity() * numDecks);
+                    cards.put(c, c.getQuantity() * numDecks);
                 } else {
-                    states.put(state, 0);
+                    cards.put(c, 0);
                 }
             }
         });
@@ -76,6 +97,19 @@ class ShoeInfo {
     double getDownCardEv() {
 //        System.out.println("Down Card EV: " + unrevealedTotal / unrevealedCards);
         return unrevealedTotal / unrevealedCards;
+    }
+
+    /**
+     * Returns the expected value of a down card, taking into account the card we just drew.
+     * @param draw - The card we just drew.
+     * @return The expected value of a down card.
+     */
+    double getDownCardEvWithDraw(Card draw) {
+        if (numShuffles > 0) {
+            return unrevealedTotal / unrevealedCards;
+        } else {
+            return (unrevealedTotal - draw.getValue()) / (unrevealedCards - 1);
+        }
     }
 
     double getDrawEv() {
@@ -99,6 +133,10 @@ class ShoeInfo {
         }
     }
 
+    Map<Card, Integer> getCardCountsForState(CardState state) {
+        return Collections.unmodifiableMap(shoeState.get(state));
+    }
+
     void processEvent(Event event) {
         // TODO(stfinancial): Want to update deck on our own personal draw since we get new information.
         switch (event.getType()) {
@@ -114,8 +152,10 @@ class ShoeInfo {
                     // TODO(stfinancial): THIS DOES NOT MESH WITH OUR CURRENT INCARNATION OF UNREVEALED TOTAL
                     // Mark remaining UNREVEALED cards as FACE_DOWN
                     for (Card c: Card.values()) {
-                        shoeState.get(c).put(CardState.FACE_DOWN, shoeState.get(c).get(CardState.UNREVEALED));
-                        shoeState.get(c).put(CardState.UNREVEALED, 0);
+                        shoeState.get(CardState.FACE_DOWN).put(c, shoeState.get(CardState.UNREVEALED).get(c));
+                        shoeState.get(CardState.UNREVEALED).put(c, 0);
+//                        shoeState.get(c).put(CardState.FACE_DOWN, shoeState.get(c).get(CardState.UNREVEALED));
+//                        shoeState.get(c).put(CardState.UNREVEALED, 0);
                     }
                 }
                 // Shuffle the discard into the deck
@@ -225,10 +265,18 @@ class ShoeInfo {
     }
 
     private void incrementCount(CardState state, Card card) {
-        shoeState.get(card).put(state, shoeState.get(card).get(state) + 1);
+        shoeState.get(state).put(card, shoeState.get(state).get(card) + 1);
     }
 
     private void decrementCount(CardState state, Card card) {
-        shoeState.get(card).put(state, shoeState.get(card).get(state) - 1);
+        shoeState.get(state).put(card, shoeState.get(state).get(card) - 1);
     }
+
+//    private void incrementCount(CardState state, Card card) {
+//        shoeState.get(card).put(state, shoeState.get(card).get(state) + 1);
+//    }
+
+//    private void decrementCount(CardState state, Card card) {
+//        shoeState.get(card).put(state, shoeState.get(card).get(state) - 1);
+//    }
 }
