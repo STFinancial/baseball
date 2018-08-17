@@ -30,6 +30,19 @@ class Hand implements Iterable<Hand.Spot> {
         }
     }
 
+    Hand(Hand h) {
+        this.rows = h.rows;
+        this.columns = h.columns;
+        spots = new Spot[rows][columns];
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                spots[row][column] = new Spot(row, column);
+                spots[row][column].card = h.viewCard(row, column);
+                spots[row][column].state = h.getSpotState(row, column);
+            }
+        }
+    }
+
     void clear() {
         for (int row = 0; row < rows; ++row) {
             for (int column = 0; column < columns; ++column) {

@@ -52,7 +52,7 @@ public class STFPlayer1 extends AbstractPlayer {
          */
         List<ScoredMove> scoredMoves = new LinkedList<>();
         // TODO(stfinancial): Take into account info gained in delta-EV of flip move.
-        scoredMoves.add(new ScoredMove(getFlipMove(), 0));
+        scoredMoves.add(new ScoredMove(getFlipMove(), 0, 0));
         scoredMoves.add(getScoredDrawMove());
         scoredMoves.add(getScoredDrawDiscardMove());
         Collections.sort(scoredMoves);
@@ -118,7 +118,7 @@ public class STFPlayer1 extends AbstractPlayer {
                 deltaCount += count.getValue();
             }
         }
-        return new ScoredMove(new Move(MoveType.DRAW), deltaTotal / deltaCount);
+        return new ScoredMove(new Move(MoveType.DRAW), deltaTotal / deltaCount, 0);
     }
 
     private ScoredMove getScoredDrawDiscardMove() {
@@ -140,7 +140,7 @@ public class STFPlayer1 extends AbstractPlayer {
                         collapseRow = row;
                     }
                 }
-                return new ScoredMove(new Move(MoveType.REPLACE_WITH_DISCARD, collapseRow, col), collapseDelta);
+                return new ScoredMove(new Move(MoveType.REPLACE_WITH_DISCARD, collapseRow, col), collapseDelta, 0);
             }
         }
         ScoredSpot spot = findWorstSpot();
@@ -149,7 +149,7 @@ public class STFPlayer1 extends AbstractPlayer {
             spot = new ScoredSpot(findBestFaceDownSpotForCard(g.getDiscardUpCard()), spot.getScore());
         }
 
-        return new ScoredMove(new Move(MoveType.REPLACE_WITH_DISCARD, spot.getSpot().getRow(), spot.getSpot().getColumn()), g.getDiscardUpCard().getValue() - spot.getScore());
+        return new ScoredMove(new Move(MoveType.REPLACE_WITH_DISCARD, spot.getSpot().getRow(), spot.getSpot().getColumn()), g.getDiscardUpCard().getValue() - spot.getScore(), 0);
     }
 
     private Move getFlipMove() {

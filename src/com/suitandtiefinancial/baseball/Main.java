@@ -5,6 +5,7 @@ import com.suitandtiefinancial.baseball.player.Player;
 import com.suitandtiefinancial.baseball.player.boxxy.BoxxyPlayer;
 import com.suitandtiefinancial.baseball.player.trophycase.ContinuousEVPlayer;
 import com.suitandtiefinancial.baseball.player.trophycase.STFPlayer1;
+import com.suitandtiefinancial.baseball.player.trophycase.STFPlayer2;
 import com.suitandtiefinancial.baseball.testbench.TestBench;
 
 public class Main {
@@ -21,15 +22,15 @@ public class Main {
 //		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
 //		doOneDetailed(getFocusPlayer(), getEvPlayers(5));
 
-		doMultipleSummaryOnly(1000000, getFocusPlayer(), getEvPlayers(5));
+//		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
 //		doOneDetailed(getFocusPlayer(), getBoxxyPlayers(5));
 //		doMultipleSummaryOnly(100000, getFocusPlayer(), getEvPlayers(5));
-//		doMultipleSummaryOnly(10000, getFocusPlayer(), getBoxxyPlayers(5));
+		doMultipleSummaryOnly(10000, getFocusPlayer(), getBoxxyPlayers(5));
 
 	}
 
 	private static Player getFocusPlayer() {
-		return new STFPlayer1();
+		return new STFPlayer2();
 //		return new ContinuousEVPlayer();
 //		return new BoxxyPlayer(1.5f, 3f, 4f);
 	}
